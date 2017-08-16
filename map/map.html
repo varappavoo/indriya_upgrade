@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript">
+$(document).ready(function() {
+  $(".map").click(function() {
+    alert("You clicked on " + $(this).attr('rel'));
+  });
+});
+</script>
+<style type="text/css">
+area {
+    display: block;
+    background-color:pink;
+   }
+ </style>
+</head>
+<body>
+<!-- <div class="image-map">
+  <a class="map" rel="G" style="top: 0px; left: 0px; width: 0px; height: 0px;" href="#">g</a>
+  <a class="map" rel="o" style="top: 0px; left: 70px; width: 0px; height: 0px" href="#">o</a>
+  <a class="map" rel="o" style="top: 20px; left: 75px; width: 0px; height: 0px" href="#">o</a>
+  <a class="map" rel="o" style="top: 0px; left: 120px; width: 0px; height: 0px" href="#"></a>
+  <a class="map" rel="g" style="top: 0px; left: 170px; width: 0px; height: 0px" href="#"></a>
+  <a class="map" rel="l" style="top: 0px; left: 210px; width: 0px; height: 0px" href="#"></a>
+  <a class="map" rel="e" style="top: 0px; left: 230px; width: 0px; height: 0px" href="#"></a>
+</div> -->
+
+<img src="COM1_L2_wo_Legend.png" usemap="#image-map"/>
+<img src="COM1_L1_wo_Legend.png" usemap="#image-map"/>
+<img src="COM1_Basement_wo_Legend.png" usemap="#image-map"/>
+
+<map name="image-map">
+<area shape="poly" coords="51,44" href="#" style="border:70;background-color:#000000" />
+<area shape="poly" coords="52,46,59,58,112,74,125,35,79,15,57,14" href="#" target="_blank"   style="border:70;" />
+<!-- <a class="map" rel="e" style="top: 0px; left: 230px; width: 0px; height: 0px" href="#">gg</a> -->
+<!-- <area shape="circ" coords="0,0,27,12" href="javascript:;" onclick="up($(this));">
+  <area shape="rect" coords="0,0,27,12" href="javascript:;" onclick="up($(this));">
+  <area shape="rect" coords="0,13,27,25" href="javascript:;" onclick="down($(this));"> -->
+</map>
+
+</body>
+</html>

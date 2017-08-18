@@ -55,6 +55,7 @@ class ClientThread(Thread):
             try:
                 # data_received = str(self.socket.recv(2048))
                 data = str(self.socket.recv(2048))
+                if data == '': break
                 # for data in data_received.split("\\n"):
                 print(data)
                 try:
@@ -83,7 +84,7 @@ class ClientThread(Thread):
                         })
                     except:
                         print(traceback.print_exc())
-                        
+
                     now = time()
                     if(now - tmp_time >= 1 or i%1000==0):
                         # print(i)

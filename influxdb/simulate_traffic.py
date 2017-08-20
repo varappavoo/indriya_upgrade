@@ -14,7 +14,14 @@ sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
 
 sock.connect(("localhost", 9000))
 
-RUN_FOR_SECS = 60
+RUN_FOR_SECS = 900
+### 900 = 15mins
+# time count_value
+# ---- -----------
+# 0    12430000
+# 12430000/(900*100)
+# 138.11111111111111
+
 start=time()
 count=0
 while True:
@@ -26,7 +33,7 @@ while True:
 		data_string = json.dumps(json_data)
 		# print(data_string)
 		# data = str.encode(nodeid + ",123456789012345678901234567890123456789012345678901234567890abcdxyz\n")
-		sleep(0.00001)
+		# sleep(0.000001)
 		# print(data)
 		# for i in range(100):
 		sock.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte

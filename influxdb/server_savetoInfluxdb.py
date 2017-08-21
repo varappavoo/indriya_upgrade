@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+from secrets import *
 import socket
 from threading import Thread
 # from socketserver import ThreadingMixIn
@@ -12,11 +13,11 @@ import json
 
 
 
-user = 'root'
-password = 'root'
-dbname = 'example'
-dbuser = 'lenovo'
-dbuser_password = 'enelongpasswordsa'
+#user = 'root'
+#password = 'root'
+dbname = 'experiment'
+dbuser = admin
+dbuser_password = admin_password
 table = 'test'
 host='localhost'
 port=8086

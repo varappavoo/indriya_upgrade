@@ -14,7 +14,7 @@ sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
 
 sock.connect(("localhost", 9000))
 
-RUN_FOR_SECS = 900
+RUN_FOR_SECS = 60
 ### 900 = 15mins
 # time count_value
 # ---- -----------

@@ -76,7 +76,7 @@ class ClientThread(Thread):
 					else:
 						json_data = json.loads(data_received_split[i])
 
-					# print(count,json_data)
+					print(json_data)
 					# data_received = data_received[2:-3]
 					# data = str(self.socket.recv(2048))
 
@@ -119,7 +119,7 @@ class ClientThread(Thread):
 					#     # print(traceback.print_exc())
 
 					now = time()
-					if(now - tmp_time >= 30 or count%5000==0):
+					if(now - tmp_time >= 10 or count%5000==0):
 						# print(i)
 						server = multiprocessing.Process(target=execute_request,args=([start,json_body]))
 						server.start()

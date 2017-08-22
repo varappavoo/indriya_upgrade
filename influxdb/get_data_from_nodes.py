@@ -10,9 +10,10 @@ import json
 
 from nodes_db import *
 
-server_ip = "192.168.1.102"
+server_ip = "192.168.1.103"
 server_port = 9000
 # dbhost = "192.168.1.103"
+global list_of_nodes
 
 def get_data_from(nodeid, list_of_nodes):
 	sock_node = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -29,6 +30,7 @@ def get_data_from(nodeid, list_of_nodes):
 
 	count=0
 	while list_of_nodes[nodeid]['active']:
+		# print("connecting to node", nodeid)
 		try:
 			data_received = sock_node.recv(4096)
 			if not data_received: break
@@ -43,8 +45,9 @@ def get_data_from(nodeid, list_of_nodes):
 					json_data['value'] = data_received_split[i]
 
 				data_string = json.dumps(json_data)
+				print(data_string)
 				sock_server.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte
-
+			last_dangling_chunk = data_received_split[-1]
 		except:
 			print(traceback.print_exc())
 	print("closing socket to server and node", nodeid)

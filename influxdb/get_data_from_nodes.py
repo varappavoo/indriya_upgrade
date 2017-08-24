@@ -8,8 +8,7 @@ from multiprocessing import Process, Manager
 import traceback
 import json
 
-server_ip = "192.168.1.103"
-server_port = 9000
+from config import *
 
 # dbhost = "192.168.1.103"
 list_of_nodes={}
@@ -94,7 +93,9 @@ def start_collection_from(nodeid, manager_proxy_nodes_status):
 			try:
 				data_received = sock_node.recv(4096)
 				if not data_received: break
-				data_received_split = data_received.decode('utf-8').split('\n')
+				# data_received = data_received
+				data_received_split = data_received.decode('utf-8','ignore').split('\n')
+				# data_received_split = data_received.split('\n')
 				for i in range(len(data_received_split) - 1): # last chunk is likely to be incomplete
 					json_data ={}#'{"nodeid":' + nodeid', "value": "123456789012345678901234567890123456789012345678901234567890abcdxyz"}'
 					count = count + 1

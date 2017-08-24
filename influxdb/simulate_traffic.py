@@ -7,14 +7,15 @@ import traceback
 import json
 
 nodeid = sys.argv[1]
+host = "192.168.1.103"
 # ser = serial.Serial(port, 115200)
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
 
-sock.connect(("localhost", 9000))
+sock.connect((host, 9000))
 
-RUN_FOR_SECS = 60
+RUN_FOR_SECS = 4*60*60
 ### 900 = 15mins
 # time count_value
 # ---- -----------
@@ -33,7 +34,7 @@ while True:
 		data_string = json.dumps(json_data)
 		# print(data_string)
 		# data = str.encode(nodeid + ",123456789012345678901234567890123456789012345678901234567890abcdxyz\n")
-		# sleep(0.000001)
+		# sleep(0.001)
 		# print(data)
 		# for i in range(100):
 		sock.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte

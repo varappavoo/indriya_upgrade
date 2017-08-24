@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-from secrets import *
 import socket
 from threading import Thread
 # from socketserver import ThreadingMixIn
@@ -11,17 +10,12 @@ import multiprocessing
 import traceback
 import json
 
-
+from config import *
 
 #user = 'root'
 #password = 'root'
-dbname = 'experiment'
-dbuser = admin
-dbuser_password = admin_password
-table = 'test'
-host='localhost'
-port=8086
-nodeid = 333
+
+# nodeid = 333
 
 from time import time,sleep
 from datetime import datetime
@@ -119,7 +113,7 @@ class ClientThread(Thread):
 					#     # print(traceback.print_exc())
 
 					now = time()
-					if(now - tmp_time >= 10 or count%5000==0):
+					if(now - tmp_time >= 10 or count==db_batch_size):
 						# print(i)
 						server = multiprocessing.Process(target=execute_request,args=([start,json_body]))
 						server.start()

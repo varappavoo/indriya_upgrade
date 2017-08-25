@@ -76,10 +76,15 @@ def start_collection_from(nodeid, manager_proxy_nodes_status):
 	sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
 	sock_node.connect((list_of_nodes[nodeid]['gateway_ip'], list_of_nodes[nodeid]['gateway_port']))
 
-	sock_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	sock_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-	sock_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
-	sock_server.connect((server_ip, server_port))
+	# sock_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	# sock_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+	# sock_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
+	# sock_server.connect((server_ip, server_savetodb_port))
+
+	sock_aggr_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	sock_aggr_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+	sock_aggr_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
+	sock_aggr_server.connect((server_aggr_ip, server_aggr_port))
 
 	sock_rt_stream_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
 	
@@ -118,8 +123,8 @@ def start_collection_from(nodeid, manager_proxy_nodes_status):
 
 					data_string = json.dumps(json_data)
 					print(data_string)
-					sock_server.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte
-
+					# sock_server.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte
+					sock_aggr_server.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte
 					sock_rt_stream_udp.sendto(str.encode(data_string,'utf-8') + str.encode("\n"), ('localhost', UDP_PORT+int(nodeid)))
 					print(UDP_PORT+int(nodeid))
 				last_dangling_chunk = data_received_split[-1]

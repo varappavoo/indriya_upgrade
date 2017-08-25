@@ -35,12 +35,12 @@ def execute_request(start,json_body):
 
 def savetodb_batching(json_data):
 	global json_body, count, start, tmp_time
-	current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+	# current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
 	# sleep(0.00001)
 	json_body.append({
 		"measurement": table,
-		"time": current_time,
+		"time": json_data['time'],#current_time,
 		# "tags": {"nodeid": data_split[0]},
 		"tags": {"nodeid": json_data['nodeid']},
 		# "fields": {"data": '1234567890123456789012345678901234567890_' + str(value)}
@@ -113,9 +113,12 @@ class ClientThread(Thread):
 					else:
 						json_data = json.loads(data_received_split[i])
 
+					current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+					json_data['time']=current_time
 					print(json_data)
 
 					savetodb_batching(json_data)
+
 				last_dangling_chunk = data_received_split[-1]
 			except:
 				# print(data_received.decode('utf-8'))

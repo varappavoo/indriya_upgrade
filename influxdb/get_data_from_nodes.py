@@ -136,7 +136,7 @@ def start_collection_from(nodeid, manager_proxy_nodes_status):
 	print("closing socket to server and node", nodeid)
 	# sleep(5)
 	list_of_nodes_running.remove(nodeid)
-	sock_server.close()
+	sock_aggr_server.close()
 	sock_node.close()
 
 

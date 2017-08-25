@@ -20,15 +20,28 @@ from config import *
 from time import time,sleep
 from datetime import datetime
 
+import paho.mqtt.client as mqtt
+
+
 active_jobs={}
-active_jobs['1']=['111','222']
-active_jobs['2']=['333']
+active_jobs['1abc']=['111','222']
+active_jobs['2eee']=['333']
 
 json_body = []
 count=0
 client = InfluxDBClient(host, port, dbuser, dbuser_password, dbname)
 start = time()
 tmp_time = start
+
+mqtt_broker="localhost"
+port=1883
+mqtt_client = mqtt.Client(client_id="indriya_server")
+
+def on_publish(client,userdata,result):
+	pass
+
+mqtt_client.on_publish = on_publish                       
+mqtt_client.connect(mqtt_broker,port) 
 
 def execute_request(start,json_body):
 	result =  client.write_points(json_body)#,time_precision='u')   
@@ -53,6 +66,9 @@ def savetodb_batching(json_data):
 	# except:
 	# 	print("invalid nodeid",data_split[0])
 	#     # print(traceback.print_exc())
+	for key in active_jobs.keys():
+		if (json_data['nodeid'] in active_jobs[key]):
+			 client.publish(key, json.dumps(json_data), True)
 
 	now = time()
 	if(now - tmp_time >= 10 or count==db_batch_size):
@@ -62,6 +78,10 @@ def savetodb_batching(json_data):
 		json_body = []
 		tmp_time = now
 		count=0
+
+def dispatcher(json_data):
+	# assign ports to active jobs and forward the data...
+	pass
 
 # client = InfluxDBClient(host, port, dbuser, dbuser_password, dbname)
 # start = time()

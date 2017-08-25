@@ -26,6 +26,8 @@ import paho.mqtt.client as mqtt
 active_jobs={}
 active_jobs['1abc']=['111','222']
 active_jobs['2eee']=['333']
+active_jobs['44dd']=['444']
+active_jobs['55ee']=['555']
 
 json_body = []
 count=0
@@ -47,7 +49,7 @@ def execute_request(start,json_body):
 	result =  client.write_points(json_body)#,time_precision='u')   
 
 def savetodb_batching(json_data):
-	global json_body, count, start, tmp_time
+	global json_body, count, start, tmp_time, active_jobs, mqtt_client
 	# current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
 	# sleep(0.00001)
@@ -67,8 +69,10 @@ def savetodb_batching(json_data):
 	# 	print("invalid nodeid",data_split[0])
 	#     # print(traceback.print_exc())
 	for key in active_jobs.keys():
+		print("1",json_data['nodeid'],active_jobs[key])
 		if (json_data['nodeid'] in active_jobs[key]):
-			 client.publish(key, json.dumps(json_data), True)
+			print("2",json_data['nodeid'],active_jobs[key])
+			mqtt_client.publish(key, json.dumps(json_data), True)
 
 	now = time()
 	if(now - tmp_time >= 10 or count==db_batch_size):

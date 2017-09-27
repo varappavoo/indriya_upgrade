@@ -102,7 +102,7 @@ def start_collection_from(nodeid, manager_proxy_nodes_status):
 	while True:
 		if(manager_proxy_nodes_status[nodeid]):
 
-			print("PROCESS","manager_proxy_nodes_status['111']",manager_proxy_nodes_status['111'])
+			#print("PROCESS","manager_proxy_nodes_status['111']",manager_proxy_nodes_status['111'])
 
 			# print("connecting to node", nodeid)
 			try:

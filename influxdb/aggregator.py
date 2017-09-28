@@ -24,7 +24,7 @@ import paho.mqtt.client as mqtt
 
 
 active_jobs={}
-active_jobs['1abc']=['255','235']
+active_jobs['1abc']=['255','235','7041']
 active_jobs['2eee']=['211']
 active_jobs['44dd']=['444']
 active_jobs['55ee']=['555']

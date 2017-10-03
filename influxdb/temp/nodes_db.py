@@ -1,6 +1,6 @@
 list_of_nodes = {} # virtual_id, gateway_ip, gateway_port
 
-gateway_ip_temp_static = "192.168.1.100"
+gateway_ip_temp_static = "192.168.1.200"
 
 list_of_nodes['111'] =  {}
 list_of_nodes['111']['gateway_ip'] = gateway_ip_temp_static

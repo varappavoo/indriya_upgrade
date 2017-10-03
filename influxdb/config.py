@@ -1,7 +1,7 @@
 from secrets import *
 
-server_ip = "192.168.1.103"
-server_aggr_ip = "192.168.1.103"
+server_ip = "localhost"
+server_aggr_ip = "localhost"
 
 server_savetodb_port = 9000
 server_aggr_port = 9999

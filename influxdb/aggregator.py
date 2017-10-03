@@ -55,6 +55,10 @@ mqtt_client.on_publish = on_publish
 mqtt_client.connect(mqtt_broker,port) 
 mqtt_client.loop_start()
 
+def update_jobs():
+	# check db/file for jobs and respective nodes involved
+	pass
+
 def execute_request(start,json_body):
 	result =  client.write_points(json_body)#,time_precision='u')   
 

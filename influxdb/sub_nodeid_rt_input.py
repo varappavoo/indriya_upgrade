@@ -108,9 +108,9 @@ client.connect(broker)#connect
 client.loop_start() #start loop to process received messages
 print("subscribing ")
 client.subscribe("pull/#")#subscribe
-time.sleep(1)
-print("testing by pulishing...")
-client.publish("pull/235","on")#publish
+#time.sleep(1)
+#print("testing by pulishing...")
+#client.publish("pull/235","on")#publish
 while(1):
 	time.sleep(1)
 # client.disconnect() #disconnect

@@ -1,6 +1,6 @@
 virtual_id,gateway_ip,gateway_port,get_data
-255,gateway1,4000,1
-235,gateway1,4001,1
-211,gateway1,4002,1
-5,gateway1,4003,1
+235,gateway1,4000,1
+211,gateway1,4001,1
+255,gateway1,4002,1
+205,gateway1,4003,1
 7041,gateway1,4100,1

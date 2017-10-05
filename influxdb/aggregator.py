@@ -22,11 +22,11 @@ from datetime import datetime
 
 import paho.mqtt.client as mqtt
 
-
+# NEED TO WRITE A THREAD THAT CONTINUOULY POLLS MYSQLDB AND UPDATE THE active_jobs DICTIONARY
 active_jobs={}
 active_jobs['1abc']=['255','235','7041']
 active_jobs['2eee']=['211']
-active_jobs['44dd']=['5']
+active_jobs['44dd']=['205']
 active_jobs['55ee']=['555']
 
 json_body = []

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+!/usr/bin/python3
 import socket
 from threading import Thread
 # from socketserver import ThreadingMixIn

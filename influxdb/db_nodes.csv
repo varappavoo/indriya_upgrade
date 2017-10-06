@@ -1,6 +1,6 @@
-virtual_id,gateway_ip,gateway_port,get_data
-235,gateway1,4000,1
-211,gateway1,4001,1
-255,gateway1,4002,1
-205,gateway1,4003,1
-7041,gateway1,4100,1
+virtual_id,gateway_ip,gateway_port,get_data,serial_id
+235,gateway1,4000,1,/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8O49-if00-port0
+211,gateway1,4001,1,/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8R2Z-if00-port0
+255,gateway1,4002,1,/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBTNPM52-if00-port0
+205,gateway1,4003,0,/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8PVV-if00-port0
+7041,gateway1,4100,1,/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.03.00.08__Embed_with_CMSIS-DAP_L3002833-if00

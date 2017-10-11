@@ -18,7 +18,12 @@ def run_cmd(command):
 	#output = str.split(str(output), ' ')
 	#print(output)
 	#print(err)
-	if(str(err).find("Programming OK") > -1):
+	#print(err.decode("utf-8"))
+	err = err.decode("utf-8")
+	print(err)
+	print(err.find("Programming: OK"))
+	#Programming: OK
+	if(err.find("Programming: OK") > -1):
 		print("SUCCESS")
 	else:
 		print("FAILURE")

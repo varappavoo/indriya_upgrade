@@ -18,8 +18,10 @@ def run_cmd(command):
 	#output = str.split(str(output), ' ')
 	#print(output)
 	#print(err)
-	if(str(err).find("Programming OK")):
+	if(str(err).find("Programming OK") > -1):
 		print("SUCCESS")
+	else:
+		print("FAILURE")
 
 # def get_serial_address(nodeid_lookup):
 # 	found=False

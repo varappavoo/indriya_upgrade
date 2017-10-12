@@ -53,6 +53,8 @@ def check_nodes_status_from_db(manager_proxy_nodes_status):
 				if manager_proxy_nodes_status[nodeid] == 0 and list_of_nodes[nodeid]['active'] == 1: # replace 0 something like with deactivated and 1 with active
 					server = Process(target=start_collection_from,args=([nodeid,manager_proxy_nodes_status]))
 					server.start()
+					if list_of_nodes[nodeid]['active'] and nodeid not in list_of_nodes_running:
+						list_of_nodes_running.append(nodeid)
 
 			manager_proxy_nodes_status[nodeid] = list_of_nodes[nodeid]['active']
 
@@ -156,7 +158,8 @@ def start_collection_from(nodeid, manager_proxy_nodes_status):
 	print("5 ERR")
 	manager_proxy_nodes_status[nodeid]=0
 	print(manager_proxy_nodes_status)
-	list_of_nodes_running.remove(nodeid)
+	if nodeid in list_of_nodes_running:
+		list_of_nodes_running.remove(nodeid)
 	sock_aggr_server.close()
 	sock_node.close()
 

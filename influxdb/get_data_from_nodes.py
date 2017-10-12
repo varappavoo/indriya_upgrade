@@ -49,13 +49,20 @@ def check_nodes_status_from_db(manager_proxy_nodes_status):
 
 		for nodeid in list_of_nodes.keys():
 			print(nodeid, list_of_nodes[nodeid]['gateway_ip'], list_of_nodes[nodeid]['gateway_port'])
+			if manager_proxy_nodes_status.get(nodeid) != None: # node socket dead and trying to reactivate...
+				if manager_proxy_nodes_status[nodeid] == 0 and list_of_nodes[nodeid]['active'] == 1: # replace 0 something like with deactivated and 1 with active
+					server = Process(target=start_collection_from,args=([nodeid,manager_proxy_nodes_status]))
+					server.start()
+
 			manager_proxy_nodes_status[nodeid] = list_of_nodes[nodeid]['active']
+
 			if not list_of_nodes[nodeid]['active'] and nodeid in list_of_nodes_running:
 				list_of_nodes_running.remove(nodeid)
 			if list_of_nodes[nodeid]['active'] and nodeid not in list_of_nodes_running:
 				list_of_nodes_running.append(nodeid)
 				server = Process(target=start_collection_from,args=([nodeid,manager_proxy_nodes_status]))
 				server.start()
+		print("3")
 		print(manager_proxy_nodes_status)
 
 		sleep(5)
@@ -133,11 +140,22 @@ def start_collection_from(nodeid, manager_proxy_nodes_status):
 					last_dangling_chunk = last_dangling_chunk + data_received
 			except:
 				print(traceback.print_exc())
+				print("SOCKET ERR to server/node", nodeid)
+				manager_proxy_nodes_status[nodeid]=0
+				print("4 except")
+				print(manager_proxy_nodes_status)
+				list_of_nodes_running.remove(nodeid)
+				sock_aggr_server.close()
+				sock_node.close()
+				break
 		else:
 			break
 
 	print("closing socket to server and node", nodeid)
 	# sleep(5)
+	print("5 ERR")
+	manager_proxy_nodes_status[nodeid]=0
+	print(manager_proxy_nodes_status)
 	list_of_nodes_running.remove(nodeid)
 	sock_aggr_server.close()
 	sock_node.close()

@@ -8,7 +8,33 @@ from multiprocessing import Process, Manager
 import traceback
 import json
 
+import logging
+
 from config import *
+
+
+####################################
+## logger adapted from https://docs.python.org/3/howto/logging-cookbook.html
+###################################
+
+# create logger with 'spam_application'
+logger = logging.getLogger('get_data_from_nodes')
+logger.setLevel(logging.DEBUG)
+# create file handler which logs even debug messages
+fh = logging.FileHandler('/var/log/indriya/get_data_from_nodes.log')
+fh.setLevel(logging.DEBUG)
+# create console handler with a higher log level
+ch = logging.StreamHandler()
+ch.setLevel(logging.WARNING)
+# create formatter and add it to the handlers
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+# add the handlers to the logger
+logger.addHandler(fh)
+logger.addHandler(ch)
+
+
 
 # dbhost = "192.168.1.103"
 list_of_nodes={}
@@ -80,6 +106,7 @@ def check_nodes_status_from_db(manager_proxy_nodes_status):
 
 
 def start_collection_from(nodeid, manager_proxy_nodes_status):
+	logger.info("ATTEMPTING TO CREATE SOCKET to server/node " + str(nodeid))
 	sock_node = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 	sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
@@ -149,13 +176,15 @@ def start_collection_from(nodeid, manager_proxy_nodes_status):
 				list_of_nodes_running.remove(nodeid)
 				sock_aggr_server.close()
 				sock_node.close()
+				logger.warning("SOCKET ERR to server/node " + str(nodeid))
 				break
 		else:
 			break
 
 	print("closing socket to server and node", nodeid)
+	logger.warning("CLOSING SOCKET to server/node " + str(nodeid))
 	# sleep(5)
-	print("5 ERR")
+	# print("5 ERR")
 	manager_proxy_nodes_status[nodeid]=0
 	print(manager_proxy_nodes_status)
 	if nodeid in list_of_nodes_running:

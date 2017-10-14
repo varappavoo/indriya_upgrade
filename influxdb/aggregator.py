@@ -1,4 +1,4 @@
-!/usr/bin/python3
+#!/usr/bin/python3
 import socket
 from threading import Thread
 # from socketserver import ThreadingMixIn
@@ -9,6 +9,15 @@ import sys
 import multiprocessing
 import traceback
 import json
+
+#!/usr/bin/python3
+import logging
+import logging.config
+
+logging.config.fileConfig('logging.conf')
+
+# create logger
+logger = logging.getLogger('aggregator')
 
 from config import *
 
@@ -128,6 +137,7 @@ class ClientThread(Thread):
 		self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 		self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
 		print("[+] New server socket thread started for " + ip + ":" + str(port))
+		logger.info("new server socket thread started for " + ip + ":" + str(port))
 
 	def run(self):
 		tmp_time = time()
@@ -178,6 +188,7 @@ threads = []
 while True:
 	tcpServer.listen(100)
 	print("Multithreaded Python aggregator server : Waiting for connections from TCP clients...")
+	logger.info('aggregator started')
 	(client_sock, (ip,port)) = tcpServer.accept()
 	newthread = ClientThread(ip,port,client_sock)
 	newthread.start()

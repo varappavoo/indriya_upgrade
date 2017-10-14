@@ -12,27 +12,35 @@ import logging
 
 from config import *
 
+#!/usr/bin/python3
+import logging
+import logging.config
 
-####################################
+logging.config.fileConfig('logging.conf')
+
+# create logger
+logger = logging.getLogger('get_data')
+
+############################
 ## logger adapted from https://docs.python.org/3/howto/logging-cookbook.html
 ###################################
 
 # create logger with 'spam_application'
-logger = logging.getLogger('get_data_from_nodes')
-logger.setLevel(logging.DEBUG)
+#logger = logging.getLogger('get_data_from_nodes')
+#logger.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages
-fh = logging.FileHandler('/var/log/indriya/get_data_from_nodes.log')
-fh.setLevel(logging.DEBUG)
+#fh = logging.FileHandler('/var/log/indriya/get_data_from_nodes.log')
+#fh.setLevel(logging.DEBUG)
 # create console handler with a higher log level
-ch = logging.StreamHandler()
-ch.setLevel(logging.WARNING)
+#ch = logging.StreamHandler()
+#ch.setLevel(logging.WARNING)
 # create formatter and add it to the handlers
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-fh.setFormatter(formatter)
-ch.setFormatter(formatter)
+#formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#fh.setFormatter(formatter)
+#ch.setFormatter(formatter)
 # add the handlers to the logger
-logger.addHandler(fh)
-logger.addHandler(ch)
+#logger.addHandler(fh)
+#logger.addHandler(ch)
 
 
 

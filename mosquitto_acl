@@ -1,0 +1,10 @@
+user cirlab
+topic read #
+topic readwrite cirlab/#
+
+user ncl
+topic read #
+topic readwrite ncl/#
+
+user indriya
+topic readwrite #

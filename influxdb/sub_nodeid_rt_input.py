@@ -4,6 +4,8 @@ import paho.mqtt.client as paho
 from multiprocessing import Process
 import socket
 
+from active_jobs import *
+
 broker="ocean.comp.nus.edu.sg"
 # broker="iot.eclipse.org"
 #define callback
@@ -24,13 +26,18 @@ while(line!=""):
 
 def on_message(client, userdata, message):
 	print("received message = ", str(message.topic) + " - " + str(message.payload.decode("utf-8")))
-	nodeid = str(message.topic).split("/")[1]
+	user =  str(message.topic).split("/")[0]
+	nodeid = str(message.topic).split("/")[2]
 	value = str(message.payload.decode("utf-8"))
 	print("nodeid:",nodeid,"value:",value)
-	if(list_of_nodes.get(nodeid) != None):
-		if(list_of_nodes[nodeid]['active']):
-			server = Process(target=send_data_to_usb,args=([nodeid,value]))
-			server.start()
+	if nodeid in active_jobs[user]:
+		print("user", user, "booked",nodeid)
+		if(list_of_nodes.get(nodeid) != None):
+			if(list_of_nodes[nodeid]['active']):
+				server = Process(target=send_data_to_usb,args=([nodeid,value]))
+				server.start()
+	else:
+		print("user", user, "did not book",nodeid)
 
 def send_data_to_usb(nodeid,value):
 	sock_node = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -44,10 +51,11 @@ def send_data_to_usb(nodeid,value):
 
 client= paho.Client("client-001") 
 client.on_message=on_message
+client.username_pw_set("indriya", password="indriya123")
 print("connecting to broker ",broker)
 client.connect(broker)
 client.loop_start() 
 print("subscribing ")
-client.subscribe("pull/#")
+client.subscribe("+/pull/#") # + wildcard for single level wildcard
 while(1):
 	time.sleep(10)

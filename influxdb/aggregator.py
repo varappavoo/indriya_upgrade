@@ -33,11 +33,12 @@ from datetime import datetime
 import paho.mqtt.client as mqtt
 
 # NEED TO WRITE A THREAD THAT CONTINUOULY POLLS MYSQLDB AND UPDATE THE active_jobs DICTIONARY
-active_jobs={}
-active_jobs['1abc']=['255','235','7041']
-active_jobs['2eee']=['211']
-active_jobs['44dd']=['205']
-active_jobs['55ee']=['555']
+from active_jobs import *
+#active_jobs={}
+#active_jobs['1abc']=['255','235','7041']
+#active_jobs['2eee']=['211']
+#active_jobs['44dd']=['205']
+#active_jobs['55ee']=['555']
 
 json_body = []
 count=0
@@ -62,6 +63,7 @@ def on_disconnect(client, userdata, rc):
 
 
 mqtt_client.on_publish = on_publish                       
+mqtt_client.username_pw_set("indriya", password="indriya123")
 mqtt_client.connect(mqtt_broker,port) 
 mqtt_client.loop_start()
 

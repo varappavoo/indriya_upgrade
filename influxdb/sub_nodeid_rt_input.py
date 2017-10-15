@@ -6,6 +6,16 @@ import socket
 
 from active_jobs import *
 
+import logging
+import logging.config
+
+
+logging.config.fileConfig('logging.conf')
+
+# create logger
+logger = logging.getLogger('rt_input')
+
+
 broker="ocean.comp.nus.edu.sg"
 # broker="iot.eclipse.org"
 #define callback
@@ -32,12 +42,15 @@ def on_message(client, userdata, message):
 	print("nodeid:",nodeid,"value:",value)
 	if nodeid in active_jobs[user]:
 		print("user", user, "booked",nodeid)
+		logger.info("user " + user + " booked " + nodeid + "; sending: " +  value)
 		if(list_of_nodes.get(nodeid) != None):
 			if(list_of_nodes[nodeid]['active']):
 				server = Process(target=send_data_to_usb,args=([nodeid,value]))
 				server.start()
 	else:
 		print("user", user, "did not book",nodeid)
+		logger.warn("user " + user + " did not book " + nodeid + "; sending: " +  value)
+
 
 def send_data_to_usb(nodeid,value):
 	sock_node = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

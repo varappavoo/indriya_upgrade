@@ -22,36 +22,11 @@ logging.config.fileConfig('logging.conf')
 # create logger
 logger = logging.getLogger('get_data')
 
-############################
-## logger adapted from https://docs.python.org/3/howto/logging-cookbook.html
-###################################
-
-# create logger with 'spam_application'
-#logger = logging.getLogger('get_data_from_nodes')
-#logger.setLevel(logging.DEBUG)
-# create file handler which logs even debug messages
-#fh = logging.FileHandler('/var/log/indriya/get_data_from_nodes.log')
-#fh.setLevel(logging.DEBUG)
-# create console handler with a higher log level
-#ch = logging.StreamHandler()
-#ch.setLevel(logging.WARNING)
-# create formatter and add it to the handlers
-#formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-#fh.setFormatter(formatter)
-#ch.setFormatter(formatter)
-# add the handlers to the logger
-#logger.addHandler(fh)
-#logger.addHandler(ch)
-
-
 
 # dbhost = "192.168.1.103"
 list_of_nodes={}
 list_of_nodes_running=[]
 
-# def stop_collection_from(nodeid, manager_proxy_nodes_status):
-# 	# sleep(5)
-# 	manager_proxy_nodes_status[nodeid]=False
 	
 
 def check_nodes_status_from_db(manager_proxy_nodes_status):
@@ -103,15 +78,7 @@ def check_nodes_status_from_db(manager_proxy_nodes_status):
 		print(manager_proxy_nodes_status)
 
 		sleep(5)
-		# server = Process(target=stop_collection_from,args=(['111',manager_proxy_nodes_status]))
-		# server.start()
-		# sleep(5)
 
-	# manager_proxy_nodes_status['111']=True
-	# print(manager_proxy_nodes_status)
-	# server = Process(target=start_collection_from,args=(['111',manager_proxy_nodes_status]))
-	# server.start()
-	# pass
 
 
 def start_collection_from(nodeid, manager_proxy_nodes_status):
@@ -121,11 +88,6 @@ def start_collection_from(nodeid, manager_proxy_nodes_status):
 	sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
 	sock_node.connect((list_of_nodes[nodeid]['gateway_ip'], list_of_nodes[nodeid]['gateway_port']))
 
-	# sock_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	# sock_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-	# sock_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
-	# sock_server.connect((server_ip, server_savetodb_port))
-
 	sock_aggr_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock_aggr_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 	sock_aggr_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
@@ -133,13 +95,7 @@ def start_collection_from(nodeid, manager_proxy_nodes_status):
 
 	sock_rt_stream_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
 	
-	# TCP_IP = '0.0.0.0'
-	# TCP_PORT = 9000 + int(nodeid)
-	# sock_dup = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	# sock_dup.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-	# sock_dup.bind((TCP_IP, TCP_PORT))
-	# sock_dup.listen(100)
-	# (client_sock_dub, (ip,port)) = tcpServer.accept()
+
 
 	last_dangling_chunk = ""
 
@@ -220,60 +176,3 @@ with Manager() as manager:
 		sleep(5)
 
 
-	# sleep(5)
-	
-	# dict_proxy = manager.list()
-	# dict_proxy.append({})
-
-	# manager_proxy_nodes_status = dict_proxy[0]
-	# manager_proxy_nodes_status['111']=True
-
-	# dict_proxy = manager_proxy_nodes_status
-	# print(manager_proxy_nodes_status)
-
-	# print("MAIN","manager_proxy_nodes_status['111']",manager_proxy_nodes_status['111'])
-
-
-
-# nodeid = sys.argv[1]
-
-# # ser = serial.Serial(port, 115200)
-# sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-# sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
-
-# sock.connect((host, 9000))
-
-# RUN_FOR_SECS = 4*60*60
-# ### 900 = 15mins
-# # time count_value
-# # ---- -----------
-# # 0    12430000
-# # 12430000/(900*100)
-# # 138.11111111111111
-
-# start=time()
-# count=0
-# while True:
-# 	try:
-# 		# data = ser.readline()
-# 		json_data ={}#'{"nodeid":' + nodeid', "value": "123456789012345678901234567890123456789012345678901234567890abcdxyz"}'
-# 		json_data['nodeid'] = nodeid
-# 		json_data['value'] = "123456789012345678901234567890123456789012345678901234567890abcdxyz"
-# 		data_string = json.dumps(json_data)
-# 		# print(data_string)
-# 		# data = str.encode(nodeid + ",123456789012345678901234567890123456789012345678901234567890abcdxyz\n")
-# 		# sleep(0.001)
-# 		# print(data)
-# 		# for i in range(100):
-# 		sock.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte
-# 			# sock.flush()
-# 			# sleep(0.001)
-# 		count = count + 1
-# 		if(time() - start > RUN_FOR_SECS): break
-# 	except:
-# 		traceback.print_exc()
-# 		sock.close()
-# print("sent out:",count)
-# print("started",start)
-# print("ended",time())

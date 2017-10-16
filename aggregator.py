@@ -22,10 +22,6 @@ logger = logging.getLogger('aggregator')
 
 from config import *
 
-#user = 'root'
-#password = 'root'
-
-# nodeid = 333
 
 from time import time,sleep
 from datetime import datetime
@@ -34,11 +30,7 @@ import paho.mqtt.client as mqtt
 
 # NEED TO WRITE A THREAD THAT CONTINUOULY POLLS MYSQLDB AND UPDATE THE active_jobs DICTIONARY
 from active_jobs import *
-#active_jobs={}
-#active_jobs['1abc']=['255','235','7041']
-#active_jobs['2eee']=['211']
-#active_jobs['44dd']=['205']
-#active_jobs['55ee']=['555']
+
 
 json_body = []
 count=0
@@ -81,13 +73,8 @@ def savetodb_batching(json_data):
 	# sleep(0.00001)
 	json_body.append({
 		"measurement": table,
-		"time": json_data['time'],#current_time,
-		# "tags": {"nodeid": data_split[0]},
+		"time": json_data['time'],
 		"tags": {"nodeid": json_data['nodeid']},
-		# "fields": {"data": '1234567890123456789012345678901234567890_' + str(value)}
-		# "fields": {"ts": time(),"data": '123456789012345678901234567890_' + str(value)}
-		# "fields": {"nodeid": data_split[0],"data": data_split[1]}
-		# "fields": {"value": ",".join(data_split[1:])}
 		"fields": {"value": json_data['value']}
 	})
 	count=count+1
@@ -113,15 +100,6 @@ def savetodb_batching(json_data):
 def dispatcher(json_data):
 	# assign ports to active jobs and forward the data...
 	pass
-
-# client = InfluxDBClient(host, port, dbuser, dbuser_password, dbname)
-# start = time()
-# tmp_time = start
-
-# def execute_request(start,json_body):
-# 	result =  client.write_points(json_body)#,time_precision='u')   
-	# print(result)
-	# print(time()-start)
 
 
 #####################################################################################

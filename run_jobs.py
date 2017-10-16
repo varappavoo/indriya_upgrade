@@ -6,6 +6,15 @@ import subprocess
 import _thread, threading
 from time import sleep
 
+import logging
+import logging.config
+
+
+logging.config.fileConfig('logging.conf')
+
+# create logger
+logger = logging.getLogger('run_jobs')
+
 burn_results = {}
 
 class ThreadBurnMote (threading.Thread):
@@ -29,9 +38,11 @@ def run_cmd(command, success_identifier):
 	err = err.decode("utf-8")
 	if(output.find(success_identifier) > -1 or err.find(success_identifier) > -1):
 		print("SUCCESS!!")
+		logger.info("SUCCESS:" + command)
 		return True
 	else:
 		print("FAILURE!!")
+		logger.warning("FAILURE:" + command)
 		return False
 
 def execute_job(motetype, moteref,scp_command,ssh_burn_command):# scp and burn

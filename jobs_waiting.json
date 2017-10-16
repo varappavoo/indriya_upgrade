@@ -2,8 +2,8 @@
 	"user":"alice",
 	"result_id":"1234",
 	"job_config":[
-					{"binary_file":"beacon.sky", "type":"telosb", "mote_list":["211","235"]},
-					{"binary_file":"dyn_sample.sky", "type":"telosb", "mote_list":["205"]}
+					{"binary_file":"beacon.sky", "type":"telosb", "mote_list":["205"]},
+					{"binary_file":"dyn_sample.sky", "type":"telosb", "mote_list":["235","255","211"]}
 				],
 	"time":{
 		"from":"1508142300",

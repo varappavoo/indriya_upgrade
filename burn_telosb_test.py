@@ -2,6 +2,10 @@
 
 import subprocess
 
+import argparse
+
+
+
 ########################
 ####### DEACTIVATE NODE BEFORE BURNING, SET GET DATA TO 0 IN DBNODES.CSV on ocean server
 ######################
@@ -67,6 +71,18 @@ def burn_binary(mote_type, mote_serial_address, binary_file):
 		command = "msp430-bsl-telosb -p " + mote_serial_address + " -er " + binary_file
 		run_cmd(command)
 
-burn_binary("telosb", "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8O49-if00-port0", "telosb_bin/dyn_sample.sky")
+parser = argparse.ArgumentParser()
+parser.add_argument("motetype")
+parser.add_argument("serialid")
+parser.add_argument("file")
+args = parser.parse_args()
+
+############################################################################################
+### VALIDATIONS
+############################################################################################
+print(args.motetype, args.serialid, args.file)
+burn_binary(args.motetype, args.serialid, args.file)
+
+# burn_binary("telosb", "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8O49-if00-port0", "telosb_bin/dyn_sample.sky")
 #burn_binary("telosb", "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8PVV-if00-port0", "telosb_bin/beacon.sky")
 # burn_binary("telosb", "205", "telosb_bin/dyn_sample.sky")

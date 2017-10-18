@@ -8,3 +8,12 @@ topic readwrite ncl/#
 
 user indriya
 topic readwrite #
+
+user alice
+topic readwrite alice/#
+
+user bob
+topic readwrite bob/#
+
+user malory
+topic readwrite malory/#

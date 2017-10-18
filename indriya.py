@@ -5,7 +5,15 @@ import json
 import run_jobs
 from get_data_from_nodes import *
 from aggregator import *
+from sub_nodeid_rt_input import *
 # import get_data_from_nodes
+
+import logging
+
+logging.config.fileConfig('logging.conf')
+
+# create logger
+logger = logging.getLogger('indriya_main')
 
 app = Flask(__name__)
 
@@ -43,7 +51,8 @@ def update_active_users(user,mote_list):
 
 
 def process_job(json_data):
-	print('process_job(json_data)')
+	# print('process_job(json_data)')
+	logger.info("processing job submitted by " + str(json_data['user']))
 	mote_list = []
 	for i in range(len(json_data['job_config'])):
 		 mote_list = mote_list + json_data['job_config'][i]['mote_list']
@@ -56,6 +65,8 @@ def process_job(json_data):
 @app.route("/new_job", methods=['POST'])
 def new_job():
 	json_data = request.json
+	logger.info("new job submitted by " + str(json_data['user']))
+	
 	for key in json_data:
 		print(key,json_data[key])
 	# disconnect before burning...
@@ -101,7 +112,8 @@ if __name__ == '__main__':
 		get_data_from_nodes_server = Process(target=check_nodes_status_from_db,args=([manager_proxy_nodes_status,active_users]))
 		get_data_from_nodes_server.start()
 
-
+		sub_nodeid_rt_input_server = Process(target=accept_rt_input,args=([active_users]))
+		sub_nodeid_rt_input_server.start()
 
 		app_server = Process(target=app.run,args=())
 		app_server.start()

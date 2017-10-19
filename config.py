@@ -14,3 +14,6 @@ host=server_ip
 port=8086
 db_batch_size=5000
 UDP_PORT=5000
+
+ACTIVE = 1
+INACTIVE = 0

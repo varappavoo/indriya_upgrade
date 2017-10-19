@@ -6,8 +6,13 @@ import run_jobs
 from get_data_from_nodes import *
 from aggregator import *
 from sub_nodeid_rt_input import *
-# import get_data_from_nodes
 
+import sched
+from _thread import start_new_thread
+from time import time,sleep
+
+# import get_data_from_nodes
+GAP_BEFORE_STARTING_NEW_JOB = 5
 import logging
 
 logging.config.fileConfig('logging.conf')
@@ -17,11 +22,41 @@ logger = logging.getLogger('indriya_main')
 
 app = Flask(__name__)
 
-# from active_users import *
+first_run=1
+
+
+def check_scheduler():
+	# global scheduler
+	while(True):
+		print("check_scheduler",scheduler.queue)
+		if(len(scheduler.queue) > 0):
+			scheduler.run(blocking=False)
+		sleep(1)
+
+
+
+def schedule_job(json_data):
+	# logger.info("processing job for result_id..." + str(json_data['result_id']))
+	start_new_thread(process_job,(json_data,))
+	# process_job(json_data)
+
+def finish_job(json_data):
+	# logger.info("finishing job with result_id..." + str(json_data['result_id']))
+	# start_new_thread(compile_compress_data_for_job(json_data))
+	start_new_thread(compile_compress_data_for_job,(json_data,))
+
+def compile_compress_data_for_job(json_data):
+	logger.info("compiling and compressing data for result: " + str(json_data['result_id']))
+	# mote_list = []
+	# for i in range(len(json_data['job_config'])):
+	# 	 mote_list = mote_list + json_data['job_config'][i]['mote_list']
+	# deactive_motes(mote_list)
+
 
 # curl -H "Content-Type: application/json" -X POST -d @jobs_waiting.json http://localhost:5000/new_job
 def deactive_motes(mote_list):
 	print('deactive_motes(mote_list)')
+	logger.info("deactivating motes " + str(mote_list))
 	print(active_users)
 	print(mote_list)
 	for user in active_users.keys():
@@ -33,8 +68,12 @@ def deactive_motes(mote_list):
 				# print("removing",nodeid)
 				# active_users[user].remove(nodeid)
 				# print("active_users[" + user + "]",active_users[user])
-		active_users[user]=temp_list
+		if len(temp_list) == 0:
+			active_users.pop(user,None)
+		else:
+			active_users[user]=temp_list
 	print(active_users)
+	sleep(5) # takes some time as process polls... to check active motes from active users lists
 
 def burn_motes(json_data):
 	print('burn_motes(json_data)')
@@ -46,33 +85,74 @@ def update_active_users(user,mote_list):
 	print('update_active_users(user,mote_list)')
 	if(active_users.get(user) == None):
 		active_users[user]=[]
-	active_users[user] = mote_list
+	active_users[user] = active_users[user] + mote_list
 	print(active_users)
 
 
 def process_job(json_data):
 	# print('process_job(json_data)')
-	logger.info("processing job submitted by " + str(json_data['user']))
+	logger.info("processing job submitted by " + str(json_data['user']) + " result_id " + str(json_data['result_id']))
+	sleep(GAP_BEFORE_STARTING_NEW_JOB)
 	mote_list = []
 	for i in range(len(json_data['job_config'])):
 		 mote_list = mote_list + json_data['job_config'][i]['mote_list']
 	deactive_motes(mote_list)
-	sleep(5)
 	burn_motes(json_data)
 	update_active_users(json_data['user'],mote_list)
-	print('#############################################################################################')
+	# print('#############################################################################################')
+
+def add_job_to_job_queue_and_scheduler(json_data):
+	global first_run
+	if(first_run):
+		start_new_thread(check_scheduler,())
+		first_run = 0
+
+	jobs_queue[json_data['result_id']]={}
+	jobs_queue[json_data['result_id']]['json_data']=json_data
+	e_start = scheduler.enterabs(int(json_data['time']['from']), 1, schedule_job, (json_data,))
+	e_finish = scheduler.enterabs(int(json_data['time']['to']), 1, finish_job, (json_data,))
+
+	# e_start = scheduler.enter(int(json_data['time']['from']), 1, schedule_job, (json_data,))
+	# e_finish = scheduler.enter(int(json_data['time']['to']), 1, finish_job, (json_data,))
+	
+	jobs_queue[json_data['result_id']]['job_schedule_event'] = e_start
+	jobs_queue[json_data['result_id']]['job_finish_event'] = e_finish
+
+	logger.info("new job submitted by " + str(json_data['user']) + " added to job queue")
+
+	# scheduler.enterabs(int(json_data['time']['from']), 1, schedule_job, (json_data,))
+	# scheduler.enterabs(int(json_data['time']['to']), 1, finish_job, (json_data,))
+
+	# # print(jobs_queue[json_data['result_id']]['job_schedule_event'])
+	# # print(jobs_queue[json_data['result_id']]['job_finish_event'])
+	# print("scheduler.queue",scheduler.queue)
+
+	# start_new_thread(scheduler.run,())
+
 
 @app.route("/new_job", methods=['POST'])
 def new_job():
+	
+
+	# scheduler 
+	# global scheduler_dict
+	# scheduler = scheduler_dict['scheduler']
+
 	json_data = request.json
 	logger.info("new job submitted by " + str(json_data['user']))
 	
 	for key in json_data:
 		print(key,json_data[key])
-	# disconnect before burning...
-	# burn_results = run_jobs.schedule_job(json_data)
-	# print(burn_results)
-	process_job(json_data)
+	# # disconnect before burning...
+	# # burn_results = run_jobs.schedule_job(json_data)
+	# # print(burn_results)
+	# # print(int(time()))
+
+	# # start_new_thread(scheduler.run,())
+	# process_job(json_data)
+	add_job_to_job_queue_and_scheduler(json_data)
+
+
 	return "JOB:\n" + str(json_data)
 
 @app.route("/active_users", methods=['POST'])
@@ -91,6 +171,9 @@ def test():
 	return str(active_users)
 
 if __name__ == '__main__':
+	jobs_queue = {}
+	scheduler = sched.scheduler(time, sleep)
+	
 	###############################################################################################################
 	#### get_data_from_nodes
 	###############################################################################################################
@@ -99,11 +182,8 @@ if __name__ == '__main__':
 
 		manager_proxy_nodes_status = manager.dict()
 		active_users = manager.dict()
-
-		# active_users['cirlab']=['255','235','7041']
-		# active_users['alice']=['211']
-		# active_users['bob']=['205']
-		# active_users['malory']=['555']
+		# scheduler_dict = manager.dict()
+		# scheduler_dict['scheduler'] = scheduler
 
 		aggregator_server = Process(target=listen,args=([active_users]))
 		aggregator_server.start()
@@ -118,14 +198,8 @@ if __name__ == '__main__':
 		app_server = Process(target=app.run,args=())
 		app_server.start()
 
+		# scheduler_server = Process(target=run_scheduler,args=([scheduler_dict]))
+		# scheduler_server.start()
+
 		get_data_from_nodes_server.join()
 
-		# server.join()
-
-		# while True:
-		# 	sleep(5)
-	###############################################################################################################
-	#### get_data_from_nodes
-	###############################################################################################################
-	# print("----------------------------------------------------------------")
-	# app.run(debug=True, port=5000)	

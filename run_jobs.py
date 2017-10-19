@@ -9,6 +9,8 @@ from time import sleep
 import logging
 import logging.config
 
+MAX_RETRIES_BURN = 3
+WAIT_BEFORE_RETRY = 5
 
 logging.config.fileConfig('logging.conf')
 
@@ -16,8 +18,8 @@ logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('run_jobs')
 
 burn_results = {}
-with open('db_nodes_telosb.json') as json_data:
-	json_db_nodes_telosb = json.load(json_data)
+with open('nodes_virt_id_phy_id.json') as json_data:
+	json_nodes_virt_id_phy_id = json.load(json_data)
 
 class ThreadBurnMote (threading.Thread):
 	def __init__(self, motetype, moteref, scp_command, ssh_burn_command):
@@ -51,9 +53,19 @@ def execute_job(motetype, moteref,scp_command,ssh_burn_command):# scp and burn
 		burn_results['job_config'][motetype] = {}
 	burn_results['job_config'][motetype][moteref]={}
 	print(burn_results)
+
+	count_burn_tries = 1
+
 	burn_results['job_config'][motetype][moteref]['scp'] = "1" if(run_cmd(scp_command, "Exit status 0")) else "0"
 	if burn_results['job_config'][motetype][moteref]['scp'] == "1":
-		burn_results['job_config'][motetype][moteref]['burn'] = "1" if(run_cmd(ssh_burn_command, "Programming: OK")) else "0"
+		burn_done = "0"
+		while(count_burn_tries <= MAX_RETRIES_BURN and burn_done == "0"):
+			logger.warning(moteref + " - BURNING TRY:" + str(count_burn_tries))
+			burn_done = "1" if(run_cmd(ssh_burn_command, "Programming: OK")) else "0"
+			count_burn_tries = count_burn_tries + 1
+			if count_burn_tries > 1:
+				sleep(WAIT_BEFORE_RETRY)
+		burn_results['job_config'][motetype][moteref]['burn'] = burn_done
 	else:
 		burn_results['job_config'][motetype][moteref]['burn'] = "0"
 		logger.warning("Not attempting to burn as SCP was unsuccessful: \n" + scp_command)
@@ -67,8 +79,11 @@ def schedule_job(json_jobs_waiting):
 		# json_jobs_waiting = json.load(json_data)
 		# json_jobs_waiting = json.load(json_data)
 		# print()
+		num_threads = threading.activeCount()
+		# num_threads_new = 0
 		print(json_jobs_waiting)
 		burn_results['job_config']={}
+		all_threads = []
 		for job in json_jobs_waiting['job_config']:
 			print(job)
 			burn_results['result_id']=json_jobs_waiting['result_id']
@@ -76,19 +91,28 @@ def schedule_job(json_jobs_waiting):
 			if(job['type'] == 'telosb'):
 				for mote in job['mote_list']:
 					
-					print(mote, json_db_nodes_telosb[mote])
-					scp_command = "scp -v " + server_binaries_dir + job['binary_file'] + " "  + gateway_user + "@" + json_db_nodes_telosb[mote]['gateway'] \
+					print(mote, json_nodes_virt_id_phy_id[mote])
+					scp_command = "scp -v " + server_binaries_dir + job['binary_file'] + " "  + gateway_user + "@" + json_nodes_virt_id_phy_id[mote]['gateway'] \
 										+ ":" + gateway_binaries_dir
-					ssh_burn_command = "ssh " + gateway_user + "@" +json_db_nodes_telosb[mote]['gateway'] + " '" + gateway_source_dir + "burn_telosb_test.py " \
-										+  "telosb " + json_db_nodes_telosb[mote]['serial_id'] + " " + gateway_binaries_dir + job['binary_file']  + "'"
+					ssh_burn_command = "ssh " + gateway_user + "@" +json_nodes_virt_id_phy_id[mote]['gateway'] + " '" + gateway_source_dir + "burn_telosb_test.py " \
+										+  "telosb " + json_nodes_virt_id_phy_id[mote]['serial_id'] + " " + gateway_binaries_dir + job['binary_file']  + "'"
 					print(scp_command)
 					print(ssh_burn_command)
 					ThreadBurnMote(job['type'],mote,scp_command,ssh_burn_command).start()
+					# num_threads_new = num_threads_new + 1
+					# all_threads.append(t)
 
-
-		while(threading.activeCount() > 1): # main thread also counts
-			print(threading.enumerate())
+		print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+		while threading.activeCount() > num_threads:
 			sleep(1)
+		# for t in all_threads:
+		# 	t.join()
+
+
+		# while(threading.activeCount() > 1): # main thread also counts
+		# 	# print(threading.enumerate())
+		# 	print("run_jobs:schedule_job:threading.activeCount",threading.activeCount())
+		# 	sleep(1)
 
 		print(burn_results)
 		return burn_results

@@ -29,8 +29,8 @@ logger = logging.getLogger('get_data')
 # list_of_nodes={}
 # list_of_nodes_running=[]
 
-with open('db_nodes_telosb.json') as json_data:
-	json_db_nodes_telosb = json.load(json_data)
+with open('nodes_virt_id_phy_id.json') as json_data:
+	json_nodes_virt_id_phy_id = json.load(json_data)
 
 def check_nodes_status_from_db(manager_proxy_nodes_status, active_users):
 	################
@@ -55,9 +55,9 @@ def check_nodes_status_from_db(manager_proxy_nodes_status, active_users):
 		# print("-------------------------------------------------------------------------")
 		for nodeid in active_motes:
 			if manager_proxy_nodes_status.get(nodeid) == None or manager_proxy_nodes_status[nodeid] != ACTIVE: # still inactive
-				if json_db_nodes_telosb.get(nodeid) != None:
-					gateway = json_db_nodes_telosb[nodeid]['gateway']
-					port = json_db_nodes_telosb[nodeid]['port']
+				if json_nodes_virt_id_phy_id.get(nodeid) != None:
+					gateway = json_nodes_virt_id_phy_id[nodeid]['gateway']
+					port = json_nodes_virt_id_phy_id[nodeid]['port']
 					server = Process(target=start_collection_from,args=([nodeid,gateway,port,manager_proxy_nodes_status]))
 					# server = Process(target=start_collection_from,args=([nodeid,manager_proxy_nodes_status]))
 					server.start()
@@ -131,7 +131,7 @@ def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 	sock_node = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 	sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
-	# sock_node.connect((json_db_nodes_telosb[nodeid]['gateway'],json_db_nodes_telosb[nodeid]['port']))
+	# sock_node.connect((json_nodes_virt_id_phy_id[nodeid]['gateway'],json_nodes_virt_id_phy_id[nodeid]['port']))
 	sock_node.connect((gateway, port))
 
 
@@ -200,6 +200,7 @@ def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 	# if nodeid in list_of_nodes_running:
 	# 	list_of_nodes_running.remove(nodeid)
 	sock_aggr_server.close()
+	sock_node.shutdown(socket.SHUT_RDWR)
 	sock_node.close()
 
 

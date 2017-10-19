@@ -6,6 +6,7 @@ import run_jobs
 from get_data_from_nodes import *
 from aggregator import *
 from sub_nodeid_rt_input import *
+from zip_job_data import *
 
 import sched
 from _thread import start_new_thread
@@ -47,6 +48,7 @@ def finish_job(json_data):
 
 def compile_compress_data_for_job(json_data):
 	logger.info("compiling and compressing data for result: " + str(json_data['result_id']))
+	zip_data_for_result(json_data)
 	# mote_list = []
 	# for i in range(len(json_data['job_config'])):
 	# 	 mote_list = mote_list + json_data['job_config'][i]['mote_list']

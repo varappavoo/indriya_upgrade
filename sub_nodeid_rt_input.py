@@ -18,8 +18,8 @@ logger = logging.getLogger('rt_input')
 
 active_users_copy = {}
 broker="ocean.comp.nus.edu.sg"
-with open('db_nodes_telosb.json') as json_data:
-	json_db_nodes_telosb = json.load(json_data)
+with open('nodes_virt_id_phy_id.json') as json_data:
+	json_nodes_virt_id_phy_id = json.load(json_data)
 
 # broker="iot.eclipse.org"
 #define callback
@@ -63,7 +63,7 @@ def send_data_to_usb(nodeid,value):
 	sock_node = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 	sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
-	sock_node.connect((json_db_nodes_telosb[nodeid]['gateway'], json_db_nodes_telosb[nodeid]['port']))
+	sock_node.connect((json_nodes_virt_id_phy_id[nodeid]['gateway'], json_nodes_virt_id_phy_id[nodeid]['port']))
 	sock_node.send(str.encode(value,'utf-8') + str.encode("\n"))
 	sock_node.close()
 

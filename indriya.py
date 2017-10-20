@@ -14,6 +14,9 @@ import sched
 from _thread import start_new_thread
 from time import time,sleep
 
+import threading
+active_users_lock = threading.Lock()
+
 # import get_data_from_nodes
 GAP_BEFORE_STARTING_NEW_JOB = 5
 import logging
@@ -51,14 +54,15 @@ def finish_job(json_data):
 def compile_compress_data_for_job(json_data):
 	logger.info("compiling and compressing data for result: " + str(json_data['result_id']))
 	zip_data_for_result(json_data)
-	# mote_list = []
-	# for i in range(len(json_data['job_config'])):
-	# 	 mote_list = mote_list + json_data['job_config'][i]['mote_list']
-	# deactive_motes(mote_list)
+	mote_list = []
+	for i in range(len(json_data['job_config'])):
+		 mote_list = mote_list + json_data['job_config'][i]['mote_list']
+	deactive_motes(mote_list)
 
 
 # curl -H "Content-Type: application/json" -X POST -d @jobs_waiting.json http://localhost:5000/new_job
 def deactive_motes(mote_list):
+	active_users_lock.acquire()
 	print('deactive_motes(mote_list)')
 	logger.info("deactivating motes " + str(mote_list))
 	print(active_users)
@@ -77,21 +81,23 @@ def deactive_motes(mote_list):
 		else:
 			active_users[user]=temp_list
 	print(active_users)
+	active_users_lock.release()
 	sleep(5) # takes some time as process polls... to check active motes from active users lists
+
+def update_active_users(user,mote_list):
+	active_users_lock.acquire()
+	print('update_active_users(user,mote_list)')
+	if(active_users.get(user) == None):
+		active_users[user]=[]
+	active_users[user] = active_users[user] + mote_list
+	print(active_users)
+	active_users_lock.release()
 
 def burn_motes(json_data):
 	print('burn_motes(json_data)')
 	burn_results = run_jobs.schedule_job(json_data)
 	print(burn_results)
 	return burn_results
-
-def update_active_users(user,mote_list):
-	print('update_active_users(user,mote_list)')
-	if(active_users.get(user) == None):
-		active_users[user]=[]
-	active_users[user] = active_users[user] + mote_list
-	print(active_users)
-
 
 def process_job(json_data):
 	# print('process_job(json_data)')
@@ -181,12 +187,12 @@ def new_mqtt_user():
 #	return password + "/n"
 
 # curl -H "Content-Type: application/json" -X POST -d '{"cirlab":""}' http://localhost:5000/test
-@app.route("/test", methods=['POST'])
-def test():
-	json_data = request.json
-	for key in json_data:
-		active_users.pop(key)
-	return str(active_users)
+# @app.route("/test", methods=['POST'])
+# def test():
+# 	json_data = request.json
+# 	for key in json_data:
+# 		active_users.pop(key)
+# 	return str(active_users)
 
 if __name__ == '__main__':
 	jobs_queue = {}

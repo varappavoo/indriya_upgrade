@@ -7,6 +7,8 @@ from get_data_from_nodes import *
 from aggregator import *
 from sub_nodeid_rt_input import *
 from zip_job_data import *
+import fasteners
+from mqtt_user import *
 
 import sched
 from _thread import start_new_thread
@@ -145,20 +147,38 @@ def cancel_job():
 	result = cancel_job_from_queue(json_data)
 	return result + "/n"
 
-@app.route("/new_job", methods=['POST'])
+@app.route("/new_job", methods=['GET','POST'])
 def new_job():
+	print(request)
 	json_data = request.json
 	print(json_data)
 	logger.info("REQUEST: new job with resultid" + json_data['result_id'] + " submitted by " + str(json_data['user']) + "@" + str(time()) + " to be running from " + json_data['time']['from'] + " to " + json_data['time']['to'])
 	result = add_job_to_job_queue_and_scheduler(json_data)
 	return result + "/n"
 
-@app.route("/active_users", methods=['POST'])
-def users():
-	# global active_users
-	# json_data = request.json
-	# print()
-	return str(active_users)
+@app.route("/new_mqtt_user", methods=['POST'])
+def new_mqtt_user():
+	json_data = request.json
+	user = json_data['user']
+	logger.info("REQUEST: new mqtt user," + user)
+	password = add_new_mqtt_user(user)
+	mqtt_user = {}
+	mqtt_user['user'] = user
+	if password != None:
+		mqtt_user['password'] = password
+		mqtt_user['log'] = '1'
+	else:
+		mqtt_user['log'] = '0'
+	return str(mqtt_user) + "/n"
+
+
+#@app.route("/active_users", methods=['POST'])
+#def users():
+#	password = add_new_mqtt_user()
+#	# global active_users
+#	# json_data = request.json
+#	# print()
+#	return password + "/n"
 
 # curl -H "Content-Type: application/json" -X POST -d '{"cirlab":""}' http://localhost:5000/test
 @app.route("/test", methods=['POST'])

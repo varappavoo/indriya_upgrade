@@ -9,6 +9,14 @@ import json
 # time_to = 1503461290502605824
 # nodes_set = ['111','222']
 # directory = 'packed_data/'
+import logging
+import traceback
+
+logging.config.fileConfig('logging.conf')
+
+# create logger
+logger = logging.getLogger('zip_job_data')
+
 RESULT_DIRECTORY = "/home/cirlab/indriya_upgrade/output/"
 TIME_GAP_BETWEEN_JOBS_FOR_ZIPPING_SECS = 5
 
@@ -46,9 +54,23 @@ def zip_data_for_result(json_data):
 		print(command_get_data_for_job)
 		print(os.system(command_get_data_for_job))
 
-	command_zip_data_for_job = "zip " + working_dir + result_id + ".zip " + working_dir + "*"
+	command_zip_data_for_job = "zip -j " + working_dir + result_id + ".zip " + working_dir + "*"
 	print(os.system(command_zip_data_for_job))
 	print(command_zip_data_for_job)
+
+def save_burn_log(json_data, burn_results):
+
+	result_id = json_data['result_id']
+	working_dir = RESULT_DIRECTORY + result_id + "/"
+	run_cmd("mkdir -p " + working_dir)
+	filename =  working_dir + result_id +".log.json"
+	# logger.info("TODO: save burn log file: " + filename)
+	with open(filename,"w") as file_output:
+		 json.dump(burn_results, file_output)
+		 logger.info("burn log file saved: " + filename)
+	return 1	
+
+
 
 #with open('alice_jobs.json') as data_file:    
 #	json_data = json.load(data_file)

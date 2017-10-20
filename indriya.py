@@ -99,7 +99,8 @@ def process_job(json_data):
 	for i in range(len(json_data['job_config'])):
 		 mote_list = mote_list + json_data['job_config'][i]['mote_list']
 	deactive_motes(mote_list)
-	burn_motes(json_data)
+	burn_results = burn_motes(json_data)
+	save_burn_log(json_data, burn_results)
 	update_active_users(json_data['user'],mote_list)
 	# print('#############################################################################################')
 
@@ -108,54 +109,49 @@ def add_job_to_job_queue_and_scheduler(json_data):
 	if(first_run):
 		start_new_thread(check_scheduler,())
 		first_run = 0
+	try:
+		jobs_queue[json_data['result_id']]={}
+		jobs_queue[json_data['result_id']]['json_data']=json_data
+		e_start = scheduler.enterabs(int(json_data['time']['from']), 1, schedule_job, (json_data,))
+		e_finish = scheduler.enterabs(int(json_data['time']['to']), 1, finish_job, (json_data,))
 
-	jobs_queue[json_data['result_id']]={}
-	jobs_queue[json_data['result_id']]['json_data']=json_data
-	e_start = scheduler.enterabs(int(json_data['time']['from']), 1, schedule_job, (json_data,))
-	e_finish = scheduler.enterabs(int(json_data['time']['to']), 1, finish_job, (json_data,))
+		# e_start = scheduler.enter(int(json_data['time']['from']), 1, schedule_job, (json_data,))
+		# e_finish = scheduler.enter(int(json_data['time']['to']), 1, finish_job, (json_data,))
+		
+		jobs_queue[json_data['result_id']]['job_schedule_event'] = e_start
+		jobs_queue[json_data['result_id']]['job_finish_event'] = e_finish
+		logger.info("new job submitted by " + str(json_data['user']) + " added to job queue")
+		return "1"
+	except:
+		return "0"
 
-	# e_start = scheduler.enter(int(json_data['time']['from']), 1, schedule_job, (json_data,))
-	# e_finish = scheduler.enter(int(json_data['time']['to']), 1, finish_job, (json_data,))
-	
-	jobs_queue[json_data['result_id']]['job_schedule_event'] = e_start
-	jobs_queue[json_data['result_id']]['job_finish_event'] = e_finish
 
-	logger.info("new job submitted by " + str(json_data['user']) + " added to job queue")
+def cancel_job_from_queue(json_data):
+	print("before cancel job",scheduler.queue)
+	if(jobs_queue.get(json_data['result_id']) != None):
+		scheduler.cancel(jobs_queue[json_data['result_id']]['job_schedule_event'])
+		scheduler.cancel(jobs_queue[json_data['result_id']]['job_finish_event'])
+		print("after cancel job",scheduler.queue)
+		logger.info("Job, with result_id " +  json_data['result_id'] + ", was cancelled")
+		return "1"
+	else:
+		logger.warn("trying to cancel job, with result_id " +  json_data['result_id'] + ", that does not exist")
+		return "0"
 
-	# scheduler.enterabs(int(json_data['time']['from']), 1, schedule_job, (json_data,))
-	# scheduler.enterabs(int(json_data['time']['to']), 1, finish_job, (json_data,))
-
-	# # print(jobs_queue[json_data['result_id']]['job_schedule_event'])
-	# # print(jobs_queue[json_data['result_id']]['job_finish_event'])
-	# print("scheduler.queue",scheduler.queue)
-
-	# start_new_thread(scheduler.run,())
-
+@app.route("/cancel_job", methods=['POST'])
+def cancel_job():
+	json_data = request.json
+	logger.info("REQUEST: job with resultid " + json_data['result_id'] + " cancelled by " + str(json_data['user']) + "@" + str(time()) + " to be running from " + json_data['time']['from'] + " to " + json_data['time']['to'])
+	result = cancel_job_from_queue(json_data)
+	return result + "/n"
 
 @app.route("/new_job", methods=['POST'])
 def new_job():
-	
-
-	# scheduler 
-	# global scheduler_dict
-	# scheduler = scheduler_dict['scheduler']
-
 	json_data = request.json
-	logger.info("new job submitted by " + str(json_data['user']))
-	
-	for key in json_data:
-		print(key,json_data[key])
-	# # disconnect before burning...
-	# # burn_results = run_jobs.schedule_job(json_data)
-	# # print(burn_results)
-	# # print(int(time()))
-
-	# # start_new_thread(scheduler.run,())
-	# process_job(json_data)
-	add_job_to_job_queue_and_scheduler(json_data)
-
-
-	return "JOB:\n" + str(json_data)
+	print(json_data)
+	logger.info("REQUEST: new job with resultid" + json_data['result_id'] + " submitted by " + str(json_data['user']) + "@" + str(time()) + " to be running from " + json_data['time']['from'] + " to " + json_data['time']['to'])
+	result = add_job_to_job_queue_and_scheduler(json_data)
+	return result + "/n"
 
 @app.route("/active_users", methods=['POST'])
 def users():

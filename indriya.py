@@ -158,7 +158,7 @@ def new_job():
 	print(request)
 	json_data = request.json
 	print(json_data)
-	logger.info("REQUEST: new job with resultid" + json_data['result_id'] + " submitted by " + str(json_data['user']) + "@" + str(time()) + " to be running from " + json_data['time']['from'] + " to " + json_data['time']['to'])
+	logger.info("REQUEST: new job with resultid " + json_data['result_id'] + " submitted by " + str(json_data['user']) + " @ " + str(time()) + " to be running from " + json_data['time']['from'] + " to " + json_data['time']['to'])
 	result = add_job_to_job_queue_and_scheduler(json_data)
 	return result + "/n"
 

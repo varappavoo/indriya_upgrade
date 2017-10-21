@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import os
 from config import *
+from run_config import *
 
 import subprocess
 import json
@@ -15,9 +16,9 @@ import traceback
 logging.config.fileConfig('logging.conf')
 
 # create logger
-logger = logging.getLogger('zip_job_data')
+logger = logging.getLogger('zip_result_data')
 
-RESULT_DIRECTORY = "/home/cirlab/indriya_upgrade/output/"
+
 TIME_GAP_BETWEEN_JOBS_FOR_ZIPPING_SECS = 5
 
 def run_cmd(command, success_identifier=""):
@@ -55,7 +56,15 @@ def zip_data_for_result(json_data):
 		print(os.system(command_get_data_for_job))
 
 	command_zip_data_for_job = "zip -j " + working_dir + result_id + ".zip " + working_dir + "*"
+	logger.info("zipping file for " + result_id + " :" + command_zip_data_for_job)
 	print(os.system(command_zip_data_for_job))
+	
+	command_cp_to_www = "cp " + working_dir + result_id + ".zip " + RESULT_DIRECTORY_WWW
+	logger.info("copying result of " + result_id + " to www folder : " + command_cp_to_www)
+	run_cmd(command_cp_to_www)
+	
+	
+
 	print(command_zip_data_for_job)
 
 def save_burn_log(json_data, burn_results):

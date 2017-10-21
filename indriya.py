@@ -16,6 +16,7 @@ from time import time,sleep
 
 import threading
 active_users_lock = threading.Lock()
+job_queue_lock = threading.Lock()
 
 # import get_data_from_nodes
 GAP_BEFORE_STARTING_NEW_JOB = 5
@@ -58,6 +59,10 @@ def compile_compress_data_for_job(json_data):
 	for i in range(len(json_data['job_config'])):
 		 mote_list = mote_list + json_data['job_config'][i]['mote_list']
 	deactive_motes(mote_list)
+	job_queue_lock.acquire()
+	if(jobs_queue.get(json_data['result_id']) != None):
+		jobs_queue.pop(json_data['result_id'],None)
+	job_queue_lock.release()
 
 
 # curl -H "Content-Type: application/json" -X POST -d @jobs_waiting.json http://localhost:5000/new_job
@@ -102,7 +107,7 @@ def burn_motes(json_data):
 def process_job(json_data):
 	# print('process_job(json_data)')
 	logger.info("processing job submitted by " + str(json_data['user']) + " result_id " + str(json_data['result_id']))
-	sleep(GAP_BEFORE_STARTING_NEW_JOB)
+	# sleep(GAP_BEFORE_STARTING_NEW_JOB)
 	mote_list = []
 	for i in range(len(json_data['job_config'])):
 		 mote_list = mote_list + json_data['job_config'][i]['mote_list']
@@ -118,10 +123,11 @@ def add_job_to_job_queue_and_scheduler(json_data):
 		start_new_thread(check_scheduler,())
 		first_run = 0
 	try:
+		job_queue_lock.acquire()
 		jobs_queue[json_data['result_id']]={}
 		jobs_queue[json_data['result_id']]['json_data']=json_data
-		e_start = scheduler.enterabs(int(json_data['time']['from']), 1, schedule_job, (json_data,))
-		e_finish = scheduler.enterabs(int(json_data['time']['to']), 1, finish_job, (json_data,))
+		e_start = scheduler.enterabs(int(json_data['time']['from']) + GAP_BEFORE_STARTING_NEW_JOB, 1, schedule_job, (json_data,))
+		e_finish = scheduler.enterabs(int(json_data['time']['to']) - GAP_BEFORE_STARTING_NEW_JOB, 1, finish_job, (json_data,))
 
 		# e_start = scheduler.enter(int(json_data['time']['from']), 1, schedule_job, (json_data,))
 		# e_finish = scheduler.enter(int(json_data['time']['to']), 1, finish_job, (json_data,))
@@ -129,6 +135,7 @@ def add_job_to_job_queue_and_scheduler(json_data):
 		jobs_queue[json_data['result_id']]['job_schedule_event'] = e_start
 		jobs_queue[json_data['result_id']]['job_finish_event'] = e_finish
 		logger.info("new job submitted by " + str(json_data['user']) + " added to job queue")
+		job_queue_lock.release()
 		return "1"
 	except:
 		return "0"
@@ -136,20 +143,29 @@ def add_job_to_job_queue_and_scheduler(json_data):
 
 def cancel_job_from_queue(json_data):
 	print("before cancel job",scheduler.queue)
+	#lock
+	job_queue_lock.acquire()
 	if(jobs_queue.get(json_data['result_id']) != None):
-		scheduler.cancel(jobs_queue[json_data['result_id']]['job_schedule_event'])
-		scheduler.cancel(jobs_queue[json_data['result_id']]['job_finish_event'])
-		print("after cancel job",scheduler.queue)
+		now = time()
+		if(jobs_queue[json_data['result_id']]['json_data']['time']['from'] < int(now)):
+			scheduler.cancel(jobs_queue[json_data['result_id']]['job_schedule_event'])
+			logger.info("job schedule event, with result_id " +  json_data['result_id'] + ", was cancelled")
+		if(jobs_queue[json_data['result_id']]['json_data']['time']['to'] < int(now) - GAP_BEFORE_STARTING_NEW_JOB):
+			scheduler.cancel(jobs_queue[json_data['result_id']]['job_finish_event'])
+			logger.info("job compiling/zipping event, with result_id " +  json_data['result_id'] + ", was cancelled")
+		# print("after cancel job",scheduler.queue)
 		logger.info("Job, with result_id " +  json_data['result_id'] + ", was cancelled")
+		jobs_queue.pop(json_data['result_id'],None)
 		return "1"
 	else:
 		logger.warn("trying to cancel job, with result_id " +  json_data['result_id'] + ", that does not exist")
 		return "0"
+	job_queue_lock.release()
 
 @app.route("/cancel_job", methods=['POST'])
 def cancel_job():
 	json_data = request.json
-	logger.info("REQUEST: job with resultid " + json_data['result_id'] + " cancelled by " + str(json_data['user']) + "@" + str(time()) + " to be running from " + json_data['time']['from'] + " to " + json_data['time']['to'])
+	logger.info("REQUEST: job with resultid " + json_data['result_id'] + " is called for cancelation by " + str(json_data['user']) + "@" + str(time()) + " to be running from " + json_data['time']['from'] + " to " + json_data['time']['to'])
 	result = cancel_job_from_queue(json_data)
 	return result 
 

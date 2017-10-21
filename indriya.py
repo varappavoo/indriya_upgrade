@@ -172,7 +172,11 @@ def cancel_job():
 	json_data = request.json
 	logger.info("REQUEST: job with resultid " + json_data['result_id'] + " is called for cancelation by " + str(json_data['user']) + "@" + str(time()) + " to be running from " + json_data['time']['from'] + " to " + json_data['time']['to'])
 	result = cancel_job_from_queue(json_data)
-	return result 
+	response={}
+	response['result_id']=json_data['result_id']
+	response['action']='cancel_job'
+	response['result']=result
+	return str(response)
 
 @app.route("/active_users", methods=['GET','POST'])
 def active_users():
@@ -185,7 +189,11 @@ def new_job():
 	print(json_data)
 	logger.info("REQUEST: new job with resultid " + json_data['result_id'] + " submitted by " + str(json_data['user']) + " @ " + str(time()) + " to be running from " + json_data['time']['from'] + " to " + json_data['time']['to'])
 	result = add_job_to_job_queue_and_scheduler(json_data)
-	return result
+	response={}
+	response['result_id']=json_data['result_id']
+	response['action']='new_job'
+	response['result']=result
+	return str(response)
 
 @app.route("/new_mqtt_user", methods=['POST'])
 def new_mqtt_user():
@@ -195,11 +203,12 @@ def new_mqtt_user():
 	password = add_new_mqtt_user(user)
 	mqtt_user = {}
 	mqtt_user['user'] = user
+	mqtt_user['action'] = 'new_mqtt_user'
 	if password != None:
 		mqtt_user['password'] = password
-		mqtt_user['log'] = '1'
+		mqtt_user['result'] = '1'
 	else:
-		mqtt_user['log'] = '0'
+		mqtt_user['result'] = '0'
 	return str(mqtt_user)
 
 

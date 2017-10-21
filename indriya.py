@@ -151,7 +151,7 @@ def cancel_job():
 	json_data = request.json
 	logger.info("REQUEST: job with resultid " + json_data['result_id'] + " cancelled by " + str(json_data['user']) + "@" + str(time()) + " to be running from " + json_data['time']['from'] + " to " + json_data['time']['to'])
 	result = cancel_job_from_queue(json_data)
-	return result + "/n"
+	return result 
 
 @app.route("/new_job", methods=['GET','POST'])
 def new_job():
@@ -160,7 +160,7 @@ def new_job():
 	print(json_data)
 	logger.info("REQUEST: new job with resultid " + json_data['result_id'] + " submitted by " + str(json_data['user']) + " @ " + str(time()) + " to be running from " + json_data['time']['from'] + " to " + json_data['time']['to'])
 	result = add_job_to_job_queue_and_scheduler(json_data)
-	return result + "/n"
+	return result
 
 @app.route("/new_mqtt_user", methods=['POST'])
 def new_mqtt_user():
@@ -175,7 +175,7 @@ def new_mqtt_user():
 		mqtt_user['log'] = '1'
 	else:
 		mqtt_user['log'] = '0'
-	return str(mqtt_user) + "/n"
+	return str(mqtt_user)
 
 
 #@app.route("/active_users", methods=['POST'])

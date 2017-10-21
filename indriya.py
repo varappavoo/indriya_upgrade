@@ -156,11 +156,13 @@ def cancel_job_from_queue(json_data):
 		# print("after cancel job",scheduler.queue)
 		logger.info("Job, with result_id " +  json_data['result_id'] + ", was cancelled")
 		jobs_queue.pop(json_data['result_id'],None)
+		job_queue_lock.release()
 		return "1"
 	else:
 		logger.warn("trying to cancel job, with result_id " +  json_data['result_id'] + ", that does not exist")
+		job_queue_lock.release()
 		return "0"
-	job_queue_lock.release()
+	
 
 @app.route("/cancel_job", methods=['POST'])
 def cancel_job():

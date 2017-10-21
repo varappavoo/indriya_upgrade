@@ -51,7 +51,7 @@ def check_nodes_status_from_db(manager_proxy_nodes_status, active_users):
 				manager_proxy_nodes_status[nodeid] = INACTIVE
 
 		# print("-------------------------------------------------------------------------")
-		print(active_users)
+		# print(active_users)
 		# print("-------------------------------------------------------------------------")
 		for nodeid in active_motes:
 			if manager_proxy_nodes_status.get(nodeid) == None or manager_proxy_nodes_status[nodeid] != ACTIVE: # still inactive

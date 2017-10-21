@@ -37,7 +37,7 @@ def check_scheduler():
 	while(True):
 		print("check_scheduler",scheduler.queue)
 		if(len(scheduler.queue) > 0):
-			scheduler.run(blocking=False)
+			scheduler.run(blocking=True)
 		sleep(1)
 
 
@@ -136,8 +136,10 @@ def add_job_to_job_queue_and_scheduler(json_data):
 		jobs_queue[json_data['result_id']]['job_finish_event'] = e_finish
 		logger.info("new job submitted by " + str(json_data['user']) + " added to job queue")
 		job_queue_lock.release()
+		print("SCHEDULER QUEUE:",scheduler.queue)
 		return "1"
 	except:
+		print("SCHEDULER QUEUE:",scheduler.queue)
 		return "0"
 
 
@@ -160,10 +162,12 @@ def cancel_job_from_queue(json_data):
 		logger.info("Job, with result_id " +  json_data['result_id'] + ", was cancelled")
 		jobs_queue.pop(json_data['result_id'],None)
 		job_queue_lock.release()
+		print("SCHEDULER QUEUE:",scheduler.queue)
 		return "1"
 	else:
 		logger.warn("trying to cancel job, with result_id " +  json_data['result_id'] + ", that does not exist")
 		job_queue_lock.release()
+		print("SCHEDULER QUEUE:",scheduler.queue)
 		return "0"
 	
 

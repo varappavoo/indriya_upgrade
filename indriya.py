@@ -153,6 +153,10 @@ def cancel_job():
 	result = cancel_job_from_queue(json_data)
 	return result 
 
+@app.route("/active_users", methods=['GET','POST'])
+def active_users():
+	return str(active_users)
+
 @app.route("/new_job", methods=['GET','POST'])
 def new_job():
 	print(request)

@@ -162,8 +162,8 @@ def cancel_job_from_queue(json_data):
 		# print("after cancel job",scheduler.queue)
 
 		mote_list = []
-		for i in range(len(jobs_queue[result_id]['job_config'])):
-			 mote_list = mote_list + jobs_queue[result_id]['job_config'][i]['mote_list']
+		for i in range(len(jobs_queue[result_id]['json_data']['job_config'])):
+			 mote_list = mote_list + jobs_queue[result_id]['json_data']['job_config'][i]['mote_list']
 		deactive_motes(mote_list)
 		
 		logger.info("Job, with result_id " +  result_id + ", is cancelled")

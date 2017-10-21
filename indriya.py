@@ -146,26 +146,27 @@ def add_job_to_job_queue_and_scheduler(json_data):
 def cancel_job_from_queue(json_data):
 	print("before cancel job",scheduler.queue)
 	#lock
+	result_id = json_data['result_id']
 	job_queue_lock.acquire()
-	if(jobs_queue.get(json_data['result_id']) != None):
+	if(jobs_queue.get(result_id) != None):
 		now = time()
 		print("--------------------------------------------------------------------------------------")
-		print(jobs_queue[json_data['result_id']]['json_data']['time']['from'], str(int(now)))
+		print(jobs_queue[result_id]['json_data']['time']['from'], str(int(now)))
 		print("--------------------------------------------------------------------------------------")
-		if(int(jobs_queue[json_data['result_id']]['json_data']['time']['from']) > int(now)):
-			scheduler.cancel(jobs_queue[json_data['result_id']]['job_schedule_event'])
-			logger.info("job schedule event, with result_id " +  json_data['result_id'] + ", was cancelled")
-		if(int(jobs_queue[json_data['result_id']]['json_data']['time']['to']) > int(now) - GAP_BEFORE_STARTING_NEW_JOB):
-			scheduler.cancel(jobs_queue[json_data['result_id']]['job_finish_event'])
-			logger.info("job compiling/zipping event, with result_id " +  json_data['result_id'] + ", was cancelled")
+		if(int(jobs_queue[result_id]['json_data']['time']['from']) > int(now)):
+			scheduler.cancel(jobs_queue[result_id]['job_schedule_event'])
+			logger.info("job schedule event, with result_id " +  result_id + ", was cancelled")
+		if(int(jobs_queue[result_id]['json_data']['time']['to']) > int(now) - GAP_BEFORE_STARTING_NEW_JOB):
+			scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
+			logger.info("job compiling/zipping event, with result_id " +  result_id + ", was cancelled")
 		# print("after cancel job",scheduler.queue)
-		logger.info("Job, with result_id " +  json_data['result_id'] + ", was cancelled")
-		jobs_queue.pop(json_data['result_id'],None)
+		logger.info("Job, with result_id " +  result_id + ", was cancelled")
+		jobs_queue.pop(result_id,None)
 		job_queue_lock.release()
 		print("SCHEDULER QUEUE:",scheduler.queue)
 		return "1"
 	else:
-		logger.warn("trying to cancel job, with result_id " +  json_data['result_id'] + ", that does not exist")
+		logger.warn("trying to cancel job, with result_id " +  result_id + ", that does not exist")
 		job_queue_lock.release()
 		print("SCHEDULER QUEUE:",scheduler.queue)
 		return "0"
@@ -174,7 +175,7 @@ def cancel_job_from_queue(json_data):
 @app.route("/cancel_job", methods=['POST'])
 def cancel_job():
 	json_data = request.json
-	logger.info("REQUEST: job with resultid " + json_data['result_id'] + " is called for cancelation by " + str(json_data['user']) + "@" + str(time()) + " to be running from " + json_data['time']['from'] + " to " + json_data['time']['to'])
+	logger.info("REQUEST: job with resultid " + json_data['result_id'] + " is called for cancelation")# + str(json_data['user']) + "@" + str(time()) + " to be running from " + json_data['time']['from'] + " to " + json_data['time']['to'])
 	result = cancel_job_from_queue(json_data)
 	response={}
 	response['result_id']=json_data['result_id']

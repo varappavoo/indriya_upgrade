@@ -31,7 +31,6 @@ app = Flask(__name__)
 
 first_run=1
 
-
 def check_scheduler():
 	# global scheduler
 	while(True):
@@ -106,7 +105,8 @@ def burn_motes(json_data):
 
 def process_job(json_data):
 	# print('process_job(json_data)')
-	logger.info("processing job submitted by " + str(json_data['user']) + " result_id " + str(json_data['result_id']))
+	result_id = json_data['result_id']
+	logger.info("processing job submitted by " + str(json_data['user']) + " result_id " + str(result_id))
 	# sleep(GAP_BEFORE_STARTING_NEW_JOB)
 	mote_list = []
 	for i in range(len(json_data['job_config'])):
@@ -150,21 +150,24 @@ def cancel_job_from_queue(json_data):
 	job_queue_lock.acquire()
 	if(jobs_queue.get(result_id) != None):
 		now = time()
-		print("--------------------------------------------------------------------------------------")
-		print(jobs_queue[result_id]['json_data']['time']['from'], str(int(now)))
-		print("--------------------------------------------------------------------------------------")
-		if(int(jobs_queue[result_id]['json_data']['time']['from']) > int(now)):
+		job_time_from = int(jobs_queue[result_id]['json_data']['time']['from'])
+		job_time_to = int(jobs_queue[result_id]['json_data']['time']['to'])
+		# print("--------------------------------------------------------------------------------------")
+		# print(jobs_queue[result_id]['json_data']['time']['from'], str(int(now)))
+		# print("--------------------------------------------------------------------------------------")
+		if(job_time_from > int(now)):
 			scheduler.cancel(jobs_queue[result_id]['job_schedule_event'])
 			logger.info("job schedule event, with result_id " +  result_id + ", was cancelled")
-		if(int(jobs_queue[result_id]['json_data']['time']['to']) > int(now) - GAP_BEFORE_STARTING_NEW_JOB):
+		if(job_time_to > int(now) - GAP_BEFORE_STARTING_NEW_JOB):
 			scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
 			logger.info("job compiling/zipping event, with result_id " +  result_id + ", was cancelled")
 		# print("after cancel job",scheduler.queue)
 
-		mote_list = []
-		for i in range(len(jobs_queue[result_id]['json_data']['job_config'])):
-			 mote_list = mote_list + jobs_queue[result_id]['json_data']['job_config'][i]['mote_list']
-		deactive_motes(mote_list)
+		if(job_time_from < now < job_time_to):
+			mote_list = []
+			for i in range(len(jobs_queue[result_id]['json_data']['job_config'])):
+				 mote_list = mote_list + jobs_queue[result_id]['json_data']['job_config'][i]['mote_list']
+			deactive_motes(mote_list)
 		
 		logger.info("Job, with result_id " +  result_id + ", is cancelled")
 

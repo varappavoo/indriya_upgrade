@@ -17,6 +17,7 @@ from time import time,sleep
 import threading
 active_users_lock = threading.Lock()
 job_queue_lock = threading.Lock()
+running_jobs_lock = threading.Lock()
 
 # import get_data_from_nodes
 GAP_BEFORE_STARTING_NEW_JOB = 5
@@ -30,6 +31,8 @@ logger = logging.getLogger('indriya_main')
 app = Flask(__name__)
 
 first_run=1
+running_jobs = {}
+running_jobs['active'] = []
 
 def check_scheduler():
 	# global scheduler
@@ -59,6 +62,12 @@ def compile_compress_data_for_job(json_data):
 	for i in range(len(json_data['job_config'])):
 		 mote_list = mote_list + json_data['job_config'][i]['mote_list']
 	deactive_motes(mote_list)
+
+	if(resultid in running_jobs['active'])
+		running_jobs_lock.acquire()
+		running_jobs['active'] = running_jobs['active'].remove(resultid)
+		running_jobs_lock.release()
+
 	job_queue_lock.acquire()
 	if(jobs_queue.get(json_data['result_id']) != None):
 		jobs_queue.pop(json_data['result_id'],None)
@@ -117,6 +126,10 @@ def process_job(json_data):
 	burn_results = burn_motes(json_data)
 	save_burn_log(json_data, burn_results)
 	update_active_users(json_data['user'],mote_list)
+
+	running_jobs_lock.acquire()
+	running_jobs['active'] = running_jobs['active'].append(resultid)
+	running_jobs_lock.release()
 	# print('#############################################################################################')
 
 def add_job_to_job_queue_and_scheduler(json_data):
@@ -171,6 +184,11 @@ def cancel_job_from_queue(json_data):
 			for i in range(len(jobs_queue[result_id]['json_data']['job_config'])):
 				 mote_list = mote_list + jobs_queue[result_id]['json_data']['job_config'][i]['mote_list']
 			deactive_motes(mote_list)
+			
+			if(resultid in running_jobs['active'])
+				running_jobs_lock.acquire()
+				running_jobs['active'] = running_jobs['active'].remove(resultid)
+				running_jobs_lock.release()
 		
 		logger.info("Job, with result_id " +  result_id + ", is cancelled")
 
@@ -199,6 +217,10 @@ def cancel_job():
 @app.route("/active_users", methods=['GET','POST'])
 def active_users():
 	return str(active_users)
+
+@app.route("/active_jobs", methods=['GET','POST'])
+def active_jobs():
+	return str(running_jobs)
 
 @app.route("/new_job", methods=['GET','POST'])
 def new_job():

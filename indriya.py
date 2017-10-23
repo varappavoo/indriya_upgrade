@@ -36,7 +36,7 @@ def check_scheduler():
 	while(True):
 		print("check_scheduler",scheduler.queue)
 		if(len(scheduler.queue) > 0):
-			scheduler.run(blocking=True)
+			scheduler.run(blocking=False)
 		sleep(1)
 
 
@@ -52,6 +52,7 @@ def finish_job(json_data):
 	start_new_thread(compile_compress_data_for_job,(json_data,))
 
 def compile_compress_data_for_job(json_data):
+	global jobs_queue
 	logger.info("compiling and compressing data for result: " + str(json_data['result_id']))
 	zip_data_for_result(json_data)
 	mote_list = []
@@ -66,6 +67,7 @@ def compile_compress_data_for_job(json_data):
 
 # curl -H "Content-Type: application/json" -X POST -d @jobs_waiting.json http://localhost:5000/new_job
 def deactive_motes(mote_list):
+	print("trying to deactivate motes...")
 	active_users_lock.acquire()
 	print('deactive_motes(mote_list)')
 	logger.info("deactivating motes " + str(mote_list))
@@ -118,7 +120,7 @@ def process_job(json_data):
 	# print('#############################################################################################')
 
 def add_job_to_job_queue_and_scheduler(json_data):
-	global first_run
+	global first_run, jobs_queue
 	if(first_run):
 		start_new_thread(check_scheduler,())
 		first_run = 0
@@ -144,6 +146,7 @@ def add_job_to_job_queue_and_scheduler(json_data):
 
 
 def cancel_job_from_queue(json_data):
+	global jobs_queue
 	print("before cancel job",scheduler.queue)
 	#lock
 	result_id = json_data['result_id']

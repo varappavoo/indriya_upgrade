@@ -55,23 +55,28 @@ def finish_job(json_data):
 	start_new_thread(compile_compress_data_for_job,(json_data,))
 
 def compile_compress_data_for_job(json_data):
-	global jobs_queue
-	logger.info("compiling and compressing data for result: " + str(json_data['result_id']))
+	global jobs_queue, running_jobs
+	result_id = str(json_data['result_id'])
+	logger.info("compiling and compressing data for result: " + result_id)
 	zip_data_for_result(json_data)
 	mote_list = []
 	for i in range(len(json_data['job_config'])):
 		 mote_list = mote_list + json_data['job_config'][i]['mote_list']
 	deactive_motes(mote_list)
 
-	if(resultid in running_jobs['active'])
+	if(result_id in running_jobs['active']):
 		running_jobs_lock.acquire()
-		running_jobs['active'] = running_jobs['active'].remove(resultid)
+		# logger.info("running_jobs B" + str(running_jobs) + " " + result_id)
+		running_jobs['active'].remove(result_id)
+		# logger.info("running_jobs A" + str(running_jobs) + " " + result_id)
 		running_jobs_lock.release()
 
 	job_queue_lock.acquire()
 	if(jobs_queue.get(json_data['result_id']) != None):
 		jobs_queue.pop(json_data['result_id'],None)
 	job_queue_lock.release()
+
+
 
 
 # curl -H "Content-Type: application/json" -X POST -d @jobs_waiting.json http://localhost:5000/new_job
@@ -116,6 +121,7 @@ def burn_motes(json_data):
 
 def process_job(json_data):
 	# print('process_job(json_data)')
+	global running_jobs
 	result_id = json_data['result_id']
 	logger.info("processing job submitted by " + str(json_data['user']) + " result_id " + str(result_id))
 	# sleep(GAP_BEFORE_STARTING_NEW_JOB)
@@ -128,7 +134,9 @@ def process_job(json_data):
 	update_active_users(json_data['user'],mote_list)
 
 	running_jobs_lock.acquire()
-	running_jobs['active'] = running_jobs['active'].append(resultid)
+	# logger.info("running_jobs B" + str(running_jobs) + " " + result_id)
+	running_jobs['active'] = running_jobs['active'] + [result_id]
+	# logger.info("running_jobs A" + str(running_jobs))
 	running_jobs_lock.release()
 	# print('#############################################################################################')
 
@@ -159,7 +167,7 @@ def add_job_to_job_queue_and_scheduler(json_data):
 
 
 def cancel_job_from_queue(json_data):
-	global jobs_queue
+	global jobs_queue, running_jobs
 	print("before cancel job",scheduler.queue)
 	#lock
 	result_id = json_data['result_id']
@@ -185,9 +193,9 @@ def cancel_job_from_queue(json_data):
 				 mote_list = mote_list + jobs_queue[result_id]['json_data']['job_config'][i]['mote_list']
 			deactive_motes(mote_list)
 			
-			if(resultid in running_jobs['active'])
+			if(result_id in running_jobs['active']):
 				running_jobs_lock.acquire()
-				running_jobs['active'] = running_jobs['active'].remove(resultid)
+				running_jobs['active'].remove(result_id)
 				running_jobs_lock.release()
 		
 		logger.info("Job, with result_id " +  result_id + ", is cancelled")

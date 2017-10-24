@@ -21,6 +21,7 @@ running_jobs_lock = threading.Lock()
 
 # import get_data_from_nodes
 GAP_BEFORE_STARTING_NEW_JOB = 5
+GAP_AFTER_DEACTIVATING_MOTES = 10
 import logging
 
 logging.config.fileConfig('logging.conf')
@@ -102,7 +103,7 @@ def deactive_motes(mote_list):
 			active_users[user]=temp_list
 	print(active_users)
 	active_users_lock.release()
-	sleep(5) # takes some time as process polls... to check active motes from active users lists
+	sleep(GAP_AFTER_DEACTIVATING_MOTES) # takes some time as process polls... to check active motes from active users lists
 
 def update_active_users(user,mote_list):
 	active_users_lock.acquire()
@@ -236,6 +237,12 @@ def new_job():
 	json_data = request.json
 	print(json_data)
 	logger.info("REQUEST: new job with resultid " + json_data['result_id'] + " submitted by " + str(json_data['user']) + " @ " + str(time()) + " to be running from " + json_data['time']['from'] + " to " + json_data['time']['to'])
+
+	mote_list = []
+	for i in range(len(json_data['job_config'])):
+		 mote_list = mote_list + json_data['job_config'][i]['mote_list']
+	logger.info("REQUEST: new job with resultid "  + json_data['result_id'] + " with " + str(mote_list))
+
 	result = add_job_to_job_queue_and_scheduler(json_data)
 	response={}
 	response['result_id']=json_data['result_id']

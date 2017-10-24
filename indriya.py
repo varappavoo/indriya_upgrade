@@ -245,11 +245,16 @@ def new_job():
 	mote_list.sort()
 	logger.info("REQUEST: new job with resultid "  + json_data['result_id'] + " with " + str(mote_list))
 
-	result = add_job_to_job_queue_and_scheduler(json_data)
 	response={}
 	response['result_id']=json_data['result_id']
 	response['action']='new_job'
-	response['result']=result
+	now = time()
+	if((int(json_data['time']['to']) - int(json_data['time']['from'])) > MIN_TASK_TIME_FROM_NOW and int(json_data['time']['to']) < now + MIN_TASK_TIME_FROM_NOW): # min running time
+		logger.info("REQUEST: new job with resultid "  + json_data['result_id'] + " is too short for schedule")
+		response['result']="0"
+	else:
+		result = add_job_to_job_queue_and_scheduler(json_data)
+		response['result']=result
 	return str(response)
 
 @app.route("/new_mqtt_user", methods=['POST'])

@@ -1,0 +1,10 @@
+{
+	"235":{"gateway": "gateway1", "port": 4000, "serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8O49-if00-port0"},
+	"211":{"gateway": "gateway1", "port": 4001, "serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8R2Z-if00-port0"},
+	"255":{"gateway": "gateway1", "port": 4002, "serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBTNPM52-if00-port0"},
+	"205":{"gateway": "gateway1", "port": 4003, "serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8PVV-if00-port0"},
+	"230":{"gateway": "gateway1", "port": 4004,"serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8RBG-if00-port0"},
+	"206":{"gateway": "gateway1", "port": 4005,"serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8ZJ4-if00-port0"},
+	"202":{"gateway": "gateway1", "port": 4006,"serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8QKY-if00-port0"},
+	"210":{"gateway": "gateway1", "port": 4007,"serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBTNB6EA-if00-port0"}
+}

@@ -22,6 +22,7 @@ running_jobs_lock = threading.Lock()
 # import get_data_from_nodes
 GAP_BEFORE_STARTING_NEW_JOB = 5
 GAP_AFTER_DEACTIVATING_MOTES = 5
+JOB_MIN_RUNNING_TIME = 60
 import logging
 
 logging.config.fileConfig('logging.conf')
@@ -249,7 +250,7 @@ def new_job():
 	response['result_id']=json_data['result_id']
 	response['action']='new_job'
 	now = time()
-	if((int(json_data['time']['to']) - int(json_data['time']['from'])) > MIN_TASK_TIME_FROM_NOW and int(json_data['time']['to']) < now + MIN_TASK_TIME_FROM_NOW): # min running time
+	if((int(json_data['time']['to']) - int(json_data['time']['from'])) > JOB_MIN_RUNNING_TIME and int(json_data['time']['to']) < now + JOB_MIN_RUNNING_TIME): # min running time
 		logger.info("REQUEST: new job with resultid "  + json_data['result_id'] + " is too short for schedule")
 		response['result']="0"
 	else:

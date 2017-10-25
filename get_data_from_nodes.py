@@ -127,6 +127,9 @@ def check_nodes_status_from_db(manager_proxy_nodes_status, active_users):
 # def start_collection_from(nodeid, manager_proxy_nodes_status):
 def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 
+	tmp_mote_lock = fasteners.InterProcessLock('/tmp/tmp_mote_lock_' + nodeid)
+	tmp_mote_lock.acquire(blocking=True)
+
 	logger.info("ATTEMPTING TO CREATE SOCKET to server/node " + str(nodeid) +  "@" + gateway +":"+ str(port))
 	sock_node = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -187,12 +190,14 @@ def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 				sock_aggr_server.close()
 				sock_node.close()
 				logger.warning("SOCKET ERR to server/node " + str(nodeid))
+				tmp_mote_lock.release()
 				break
 		else:
 			break
 
 	print("closing socket to server and node", nodeid)
 	logger.warning("CLOSING SOCKET to server/node " + str(nodeid))
+	tmp_mote_lock.release()
 	# sleep(5)
 	# print("5 ERR")
 	manager_proxy_nodes_status[nodeid]=0

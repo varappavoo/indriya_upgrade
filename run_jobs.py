@@ -8,6 +8,7 @@ from time import sleep
 
 import logging
 import logging.config
+import fasteners
 
 MAX_RETRIES_BURN = 3
 WAIT_BEFORE_RETRY = 5
@@ -30,7 +31,10 @@ class ThreadBurnMote (threading.Thread):
 		self.ssh_burn_command = ssh_burn_command
 	def run(self):
 		print ("Starting " + self.moteref)
+		tmp_mote_lock = fasteners.InterProcessLock('/tmp/tmp_mote_lock_' + mote)
+		tmp_mote_lock.acquire(blocking=True)
 		execute_job(self.motetype, self.moteref, self.scp_command, self.ssh_burn_command)
+		tmp_mote_lock.release()
 		print ("Exiting " + self.moteref)
 
 def run_cmd(command, success_identifier):

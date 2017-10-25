@@ -126,7 +126,8 @@ def schedule_job(json_jobs_waiting):
 
 		print(burn_results[result_id])
 		logger.info(json_jobs_waiting['result_id'] + str(burn_results[result_id]))
+		logger.warn(burn_results)
 		results = burn_results[result_id]
-		burn_results.pop(result_id, None)
+		#burn_results.pop(result_id, None)
 		return results
 

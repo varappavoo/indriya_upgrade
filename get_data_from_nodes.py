@@ -17,6 +17,7 @@ from config import *
 import logging
 import logging.config
 #from logging.handlers import RotatingFileHandler
+import fasteners
 
 logging.config.fileConfig('logging.conf')
 
@@ -128,7 +129,7 @@ def check_nodes_status_from_db(manager_proxy_nodes_status, active_users):
 def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 
 	tmp_mote_lock = fasteners.InterProcessLock('/tmp/tmp_mote_lock_' + nodeid)
-	tmp_mote_lock.acquire(blocking=True)
+	x = tmp_mote_lock.acquire(blocking=True)
 
 	logger.info("ATTEMPTING TO CREATE SOCKET to server/node " + str(nodeid) +  "@" + gateway +":"+ str(port))
 	sock_node = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

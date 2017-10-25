@@ -31,10 +31,12 @@ class ThreadBurnMote (threading.Thread):
 		self.ssh_burn_command = ssh_burn_command
 	def run(self):
 		print ("Starting " + self.moteref)
-		tmp_mote_lock = fasteners.InterProcessLock('/tmp/tmp_mote_lock_' + mote)
-		tmp_mote_lock.acquire(blocking=True)
+		logger.warn("locking " + self.moteref)
+		tmp_mote_lock = fasteners.InterProcessLock('/tmp/tmp_mote_lock_' + self.moteref)
+		x = tmp_mote_lock.acquire(blocking=True)
 		execute_job(self.motetype, self.moteref, self.scp_command, self.ssh_burn_command)
 		tmp_mote_lock.release()
+		logger.warn("unlocking " + self.moteref)
 		print ("Exiting " + self.moteref)
 
 def run_cmd(command, success_identifier):

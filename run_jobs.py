@@ -54,7 +54,7 @@ def run_cmd(command, success_identifier):
 		return False
 
 def execute_job(motetype, moteref,scp_command,ssh_burn_command):# scp and burn
-	global burn_results
+	# global burn_results
 	if burn_results['job_config'].get(motetype) == None:
 		burn_results['job_config'][motetype] = {}
 	burn_results['job_config'][motetype][moteref]={}

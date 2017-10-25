@@ -133,6 +133,7 @@ def process_job(json_data):
 		 mote_list = mote_list + json_data['job_config'][i]['mote_list']
 	deactive_motes(mote_list)
 	burn_results = burn_motes(json_data)
+	logger.info(result_id + " " +str(burn_results))
 	save_burn_log(json_data, burn_results)
 	update_active_users(json_data['user'],mote_list)
 

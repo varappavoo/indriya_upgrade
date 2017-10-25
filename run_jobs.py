@@ -107,7 +107,7 @@ def schedule_job(json_jobs_waiting):
 										+  "telosb " + json_nodes_virt_id_phy_id[mote]['serial_id'] + " " + gateway_binaries_dir + job['binary_file']  + "'"
 					print(scp_command)
 					print(ssh_burn_command)
-					ThreadBurnMote(job['type'],mote,scp_command,ssh_burn_command).start()
+					ThreadBurnMote(result_id,job['type'],mote,scp_command,ssh_burn_command).start()
 					# num_threads_new = num_threads_new + 1
 					# all_threads.append(t)
 
@@ -124,8 +124,8 @@ def schedule_job(json_jobs_waiting):
 		# 	sleep(1)
 
 		print(burn_results[result_id])
-		logger(str(json_jobs_waiting['result_id']) + str(burn_results[result_id]))
-		results = burn_results[result_id]+
+		logger.info(json_jobs_waiting['result_id'] + str(burn_results[result_id]))
+		results = burn_results[result_id]
 		burn_results.pop(result_id, None)
 		return results
 

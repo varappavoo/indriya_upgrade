@@ -121,5 +121,6 @@ def schedule_job(json_jobs_waiting):
 		# 	sleep(1)
 
 		print(burn_results)
+		logger(str(json_jobs_waiting['result_id']) + str(burn_results))
 		return burn_results
 

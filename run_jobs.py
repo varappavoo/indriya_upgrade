@@ -81,7 +81,7 @@ def execute_job(motetype, moteref,scp_command,ssh_burn_command):# scp and burn
 
 def schedule_job(json_jobs_waiting):
 		# with open('jobs_waiting.json') as json_data:
-		global burn_results
+		# global burn_results
 		# json_jobs_waiting = json.load(json_data)
 		# json_jobs_waiting = json.load(json_data)
 		# print()

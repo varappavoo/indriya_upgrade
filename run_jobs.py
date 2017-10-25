@@ -55,7 +55,7 @@ def run_cmd(command, success_identifier):
 		return False
 
 def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command):# scp and burn
-	# global burn_results
+	global burn_results
 	if burn_results[result_id]['job_config'].get(motetype) == None:
 		burn_results[result_id]['job_config'][motetype] = {}
 	burn_results[result_id]['job_config'][motetype][moteref]={}
@@ -81,10 +81,11 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command):# scp
 
 
 def schedule_job(json_jobs_waiting):
+		global burn_results
 		result_id = json_jobs_waiting['result_id']
 		burn_results[result_id] = {}
 		# with open('jobs_waiting.json') as json_data:
-		# global burn_results
+		
 		# json_jobs_waiting = json.load(json_data)
 		# json_jobs_waiting = json.load(json_data)
 		# print()

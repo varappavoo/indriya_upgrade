@@ -89,6 +89,7 @@ def schedule_job(json_jobs_waiting):
 		# json_jobs_waiting = json.load(json_data)
 		# json_jobs_waiting = json.load(json_data)
 		# print()
+
 		num_threads = threading.activeCount()
 		# num_threads_new = 0
 		print(json_jobs_waiting)
@@ -109,19 +110,20 @@ def schedule_job(json_jobs_waiting):
 					print(scp_command)
 					print(ssh_burn_command)
 					t = ThreadBurnMote(result_id,job['type'],mote,scp_command,ssh_burn_command)
-					t.start()
-					t.join()
+					# t.start()
+					# t.join()
 					# num_threads_new = num_threads_new + 1
-					# all_threads.append(t)
+					all_threads.append(t)
 
 		print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
 		#while threading.activeCount() > num_threads:
 		#	sleep(1)
 
-		# for t in all_threads:
-		# 	t.join()
+		for t in all_threads:
+			t.start()
 
-
+		for t in all_threads:
+			t.join()
 		# while(threading.activeCount() > 1): # main thread also counts
 		# 	# print(threading.enumerate())
 		# 	print("run_jobs:schedule_job:threading.activeCount",threading.activeCount())

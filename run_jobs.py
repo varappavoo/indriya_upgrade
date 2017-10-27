@@ -141,7 +141,7 @@ def schedule_job(json_jobs_waiting):
 		results = burn_results[result_id]
 		#burn_results.pop(result_id, None)
 
-		save_burn_log(json_data, burn_results)
+		save_burn_log(json_jobs_waiting, burn_results)
 		tmp_job_lock.release()
 
 		return results

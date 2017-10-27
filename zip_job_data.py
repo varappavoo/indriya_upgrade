@@ -79,7 +79,28 @@ def save_burn_log(json_data, burn_results):
 		 logger.info("burn log file saved: " + filename)
 	return 1	
 
+def read_burn_log(json_data):
 
+	result_id = json_data['result_id']
+	working_dir = RESULT_DIRECTORY + result_id + "/"
+	run_cmd("mkdir -p " + working_dir)
+	filename =  working_dir + result_id +".log.json"
+	# logger.info("TODO: save burn log file: " + filename)
+	burn_results = "{}"
+	try:
+
+		with open(filename,"r") as file_input:
+			burn_results = json.load(file_input)
+			burn_results = burn_results[list(burn_results.keys())[0]]
+			# logger.info("burn log file saved: " + filename)
+			# burn_results = json.loads(file_input.readlines()[0])
+			# burn_results = burn_results[burn_results.key()]
+			# burn_results = file_input.readlines()[0]
+
+	except:
+		burn_results = "{}"
+		traceback.print_stack()
+	return str(burn_results)
 
 #with open('alice_jobs.json') as data_file:    
 #	json_data = json.load(data_file)

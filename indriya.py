@@ -141,6 +141,12 @@ def process_job(json_data):
 	tmp_job_lock = fasteners.InterProcessLock('/tmp/tmp_job_lock_' + result_id)
 	tmp_job_lock.acquire(blocking=True)
 	tmp_job_lock.release() # just make sure that the burning is done :)
+
+	#############################################################
+	######### CHECK WHETHER BURN IS SUCCESSFUL ON AT LEAST 
+	######### ONE NODE, OTHERWISE CANCEL THE SCHEDULE FINISH
+	######### USE read_burn_log(json_data) TO HELP
+	#############################################################
 	update_active_users(json_data['user'],mote_list)
 
 	running_jobs_lock.acquire()
@@ -239,6 +245,12 @@ def active_users():
 @app.route("/active_jobs", methods=['GET','POST'])
 def active_jobs():
 	return str(running_jobs)
+
+@app.route("/get_burn_results", methods=['GET','POST'])
+def get_burn_results():
+	json_data = request.json
+	data = read_burn_log(json_data)
+	return data
 
 @app.route("/new_job", methods=['GET','POST'])
 def new_job():

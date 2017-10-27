@@ -100,7 +100,7 @@ def read_burn_log(json_data):
 	except:
 		burn_results = "{}"
 		traceback.print_stack()
-	return str(burn_results)
+	return burn_results
 
 #with open('alice_jobs.json') as data_file:    
 #	json_data = json.load(data_file)

@@ -144,7 +144,7 @@ def process_job(json_data):
 
 	mote_list_burnt = check_successful_burn(json_data)
 	if(len(mote_list_burnt) > 0):
-		logger.warn(str(len(mote_list_burnt)) + '/' + len(mote_list) + ' motes are succussfully burn for job ' + result_id)
+		logger.warn(str(len(mote_list_burnt)) + '/' + str(len(mote_list)) + ' motes are succussfully burn for job ' + result_id)
 		update_active_users(json_data['user'],mote_list_burnt)
 		running_jobs_lock.acquire()
 		# logger.info("running_jobs B" + str(running_jobs) + " " + result_id)
@@ -160,14 +160,15 @@ def process_job(json_data):
 	# print('#############################################################################################')
 
 def check_successful_burn(json_data):
-	print(json_data)
+	print("check success",json_data)
 	motes_successfully_burnt = []
-	burn_results =json.loads(read_burn_log(json_data))
+	burn_results =read_burn_log(json_data)
 	for key in burn_results["job_config"].keys():
 		moteids = burn_results["job_config"][key].keys()
 		for moteid in moteids:
 			if(burn_results["job_config"][key][moteid]['burn']=='1'):
 				motes_successfully_burnt.append(moteid)
+				print(moteid)
 	return motes_successfully_burnt
 
 def add_job_to_job_queue_and_scheduler(json_data):
@@ -264,7 +265,7 @@ def active_jobs():
 def get_burn_results():
 	json_data = request.json
 	data = read_burn_log(json_data)
-	return data
+	return str(data)
 
 @app.route("/new_job", methods=['GET','POST'])
 def new_job():

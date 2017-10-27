@@ -10,6 +10,8 @@ import logging
 import logging.config
 import fasteners
 
+from zip_job_data import *
+
 MAX_RETRIES_BURN = 3
 WAIT_BEFORE_RETRY = 5
 
@@ -83,6 +85,10 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command):# scp
 def schedule_job(json_jobs_waiting):
 		global burn_results
 		result_id = json_jobs_waiting['result_id']
+
+		tmp_job_lock = fasteners.InterProcessLock('/tmp/tmp_job_lock_' + result_id)
+		tmp_job_lock.acquire(blocking=True)
+
 		burn_results[result_id] = {}
 		# with open('jobs_waiting.json') as json_data:
 		
@@ -134,5 +140,9 @@ def schedule_job(json_jobs_waiting):
 		logger.warn(burn_results)
 		results = burn_results[result_id]
 		#burn_results.pop(result_id, None)
+
+		save_burn_log(json_data, burn_results)
+		tmp_job_lock.release()
+
 		return results
 

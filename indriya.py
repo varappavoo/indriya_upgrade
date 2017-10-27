@@ -21,7 +21,7 @@ running_jobs_lock = threading.Lock()
 
 # import get_data_from_nodes
 GAP_BEFORE_STARTING_NEW_JOB = 5
-GAP_AFTER_DEACTIVATING_MOTES = 5
+GAP_AFTER_DEACTIVATING_MOTES = 2
 JOB_MIN_RUNNING_TIME = 60
 import logging
 
@@ -132,9 +132,15 @@ def process_job(json_data):
 	for i in range(len(json_data['job_config'])):
 		 mote_list = mote_list + json_data['job_config'][i]['mote_list']
 	deactive_motes(mote_list)
-	burn_results = burn_motes(json_data)
-	logger.info(result_id + " " +str(burn_results))
-	save_burn_log(json_data, burn_results)
+
+	burn_process = Process(target=burn_motes,args=([json_data]))
+	burn_process.start()
+	# burn_results = burn_motes(json_data)
+	# logger.info(result_id + " " +str(burn_results))
+	# save_burn_log(json_data, burn_results)
+	tmp_job_lock = fasteners.InterProcessLock('/tmp/tmp_job_lock_' + result_id)
+	tmp_job_lock.acquire(blocking=True)
+	tmp_job_lock.release() # just make sure that the burning is done :)
 	update_active_users(json_data['user'],mote_list)
 
 	running_jobs_lock.acquire()

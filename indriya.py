@@ -135,7 +135,8 @@ def process_job(json_data):
 
 	burn_process = Process(target=burn_motes,args=([json_data]))
 	burn_process.start()
-	burn_process.join()
+	#burn_process.join()
+	sleep(0.1)
 	# burn_results = burn_motes(json_data)
 	# logger.info(result_id + " " +str(burn_results))
 	# save_burn_log(json_data, burn_results)

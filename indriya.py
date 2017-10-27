@@ -142,7 +142,7 @@ def process_job(json_data):
 	tmp_job_lock.acquire(blocking=True)
 	tmp_job_lock.release() # just make sure that the burning is done :)
 
-	mote_list_burnt = check_successful_burn()
+	mote_list_burnt = check_successful_burn(json_data)
 	if(len(mote_list_burnt) > 1):
 		logger.warn(str(len(mote_list_burnt)) + '/' + len(mote_list) + ' motes are succussfully burn for job ' + result_id)
 		update_active_users(json_data['user'],mote_list_burnt)
@@ -154,6 +154,7 @@ def process_job(json_data):
 	else:
 		logger.warn('job ' + result_id + ' is cancelled as all motes are unsuccessful burnt')
 		scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
+		compile_compress_data_for_job(json_data)
 
 
 	# print('#############################################################################################')
@@ -269,7 +270,7 @@ def new_job():
 	print(request)
 	json_data = request.json
 	print(json_data)
-	logger.info("REQUEST: new job with resultid " + json_data['result_id'] + " submitted by " + str(json_data['user']) + " @ " + str(time()) + " to be running from " + json_data['time']['from'] + " to " + json_data['time']['to'])
+	logger.info("REQUEST: new job " + json_data['result_id'] + " submitted by " + str(json_data['user']) + " @ " + str(time()) + ", to run from " + json_data['time']['from'] + " to " + json_data['time']['to'])
 
 	mote_list = []
 	for i in range(len(json_data['job_config'])):

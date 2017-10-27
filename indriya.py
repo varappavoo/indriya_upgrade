@@ -142,19 +142,31 @@ def process_job(json_data):
 	tmp_job_lock.acquire(blocking=True)
 	tmp_job_lock.release() # just make sure that the burning is done :)
 
-	#############################################################
-	######### CHECK WHETHER BURN IS SUCCESSFUL ON AT LEAST 
-	######### ONE NODE, OTHERWISE CANCEL THE SCHEDULE FINISH
-	######### USE read_burn_log(json_data) TO HELP
-	#############################################################
-	update_active_users(json_data['user'],mote_list)
+	mote_list_burnt = check_successful_burn()
+	if(len(mote_list_burnt) > 1):
+		logger.warn(str(len(mote_list_burnt)) + '/' + len(mote_list) + ' motes are succussfully burn for job ' + result_id)
+		update_active_users(json_data['user'],mote_list_burnt)
+		running_jobs_lock.acquire()
+		# logger.info("running_jobs B" + str(running_jobs) + " " + result_id)
+		running_jobs['active'] = running_jobs['active'] + [result_id]
+		# logger.info("running_jobs A" + str(running_jobs))
+		running_jobs_lock.release()
+	else:
+		logger.warn('job ' + result_id + ' is cancelled as all motes are unsuccessful burnt')
+		scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
 
-	running_jobs_lock.acquire()
-	# logger.info("running_jobs B" + str(running_jobs) + " " + result_id)
-	running_jobs['active'] = running_jobs['active'] + [result_id]
-	# logger.info("running_jobs A" + str(running_jobs))
-	running_jobs_lock.release()
+
 	# print('#############################################################################################')
+
+def check_successful_burn(json_data):
+	motes_successfully_burnt = []
+	burn_results =json.loads(read_burn_log(json_data))
+	for key in burn_results["job_config"].keys():
+		moteids = burn_results["job_config"][key].keys()
+		for moteid in moteids:
+			if(burn_results["job_config"][key][moteid]['burn']=='1'):
+				motes_successfully_burnt.append(moteid)
+	return motes_successfully_burnt
 
 def add_job_to_job_queue_and_scheduler(json_data):
 	global first_run, jobs_queue

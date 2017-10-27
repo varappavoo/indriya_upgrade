@@ -39,7 +39,7 @@ running_jobs['active'] = []
 def check_scheduler():
 	# global scheduler
 	while(True):
-		print("check_scheduler",scheduler.queue)
+		# print("check_scheduler",scheduler.queue)
 		if(len(scheduler.queue) > 0):
 			scheduler.run(blocking=False)
 		sleep(1)
@@ -139,7 +139,10 @@ def process_job(json_data):
 	# logger.info(result_id + " " +str(burn_results))
 	# save_burn_log(json_data, burn_results)
 	tmp_job_lock = fasteners.InterProcessLock('/tmp/tmp_job_lock_' + result_id)
-	tmp_job_lock.acquire(blocking=True)
+	while(1):
+		tmp_job_lock.acquire(blocking=False)
+		print("waiting for job",result_id,"to be processed!")
+		sleep(1)
 	tmp_job_lock.release() # just make sure that the burning is done :)
 
 	mote_list_burnt = check_successful_burn(json_data)

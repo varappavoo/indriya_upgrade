@@ -135,14 +135,17 @@ def process_job(json_data):
 
 	burn_process = Process(target=burn_motes,args=([json_data]))
 	burn_process.start()
+	burn_process.join()
 	# burn_results = burn_motes(json_data)
 	# logger.info(result_id + " " +str(burn_results))
 	# save_burn_log(json_data, burn_results)
 	tmp_job_lock = fasteners.InterProcessLock('/tmp/tmp_job_lock_' + result_id)
-	while(1):
-		tmp_job_lock.acquire(blocking=False)
-		print("waiting for job",result_id,"to be processed!")
-		sleep(1)
+	#while(1):
+	#	x=
+	tmp_job_lock.acquire(blocking=True)
+	#	if(x): break
+	#	print("waiting for job",result_id,"to be processed!")
+	#	sleep(1)
 	tmp_job_lock.release() # just make sure that the burning is done :)
 
 	mote_list_burnt = check_successful_burn(json_data)

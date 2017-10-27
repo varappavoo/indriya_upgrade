@@ -143,7 +143,7 @@ def process_job(json_data):
 	tmp_job_lock.release() # just make sure that the burning is done :)
 
 	mote_list_burnt = check_successful_burn(json_data)
-	if(len(mote_list_burnt) > 1):
+	if(len(mote_list_burnt) > 0):
 		logger.warn(str(len(mote_list_burnt)) + '/' + len(mote_list) + ' motes are succussfully burn for job ' + result_id)
 		update_active_users(json_data['user'],mote_list_burnt)
 		running_jobs_lock.acquire()
@@ -160,6 +160,7 @@ def process_job(json_data):
 	# print('#############################################################################################')
 
 def check_successful_burn(json_data):
+	print(json_data)
 	motes_successfully_burnt = []
 	burn_results =json.loads(read_burn_log(json_data))
 	for key in burn_results["job_config"].keys():

@@ -20,6 +20,7 @@ logger = logging.getLogger('zip_result_data')
 
 
 TIME_GAP_BETWEEN_JOBS_FOR_ZIPPING_SECS = 5
+TIME_GAP_TO_DRAIN_PIPE = 15 # TIME BETWEEN EXPERIMENT STARTS... BEFORE BURNING AND CONSIDERING DATA ONLY FROM THE NEWLY BURN PROGRAM...
 
 def run_cmd(command, success_identifier=""):
 	p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE ) # stdout=subprocess.PIPE, shell=True)
@@ -45,8 +46,8 @@ def zip_data_for_result(json_data):
 	working_dir = RESULT_DIRECTORY + result_id + "/"
 	run_cmd("mkdir -p " + working_dir)
 	
-	time_from = (int(json_data['time']['from']) + TIME_GAP_BETWEEN_JOBS_FOR_ZIPPING_SECS) * pow(10,9)
-	time_to = (int(json_data['time']['to']) - TIME_GAP_BETWEEN_JOBS_FOR_ZIPPING_SECS) * pow(10,9)
+	time_from = (int(json_data['time']['from']) + TIME_GAP_TO_DRAIN_PIPE) * pow(10,9)
+	time_to = (int(json_data['time']['to']) - TIME_GAP_TO_DRAIN_PIPE) * pow(10,9)
 	
 	for nodeid in mote_list:
 		command_get_data_for_job = "influx -database " + dbname + " -format csv -execute \"select * from " + table + \

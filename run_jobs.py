@@ -70,7 +70,10 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command):# scp
 		burn_done = "0"
 		while(count_burn_tries <= MAX_RETRIES_BURN and burn_done == "0"):
 			logger.warning(moteref + " - BURNING TRY:" + str(count_burn_tries))
-			burn_done = "1" if(run_cmd(ssh_burn_command, "Programming: OK")) else "0"
+			if motetype == 'telosb':
+				burn_done = "1" if(run_cmd(ssh_burn_command, "Programming: OK")) else "0"
+			elif motetype == 'cc2650':
+				burn_done = "1" if(run_cmd(ssh_burn_command, "")) else "0"
 			count_burn_tries = count_burn_tries + 1
 			if count_burn_tries > 1:
 				sleep(WAIT_BEFORE_RETRY)
@@ -91,7 +94,6 @@ def schedule_job(json_jobs_waiting):
 
 		burn_results[result_id] = {}
 		# with open('jobs_waiting.json') as json_data:
-		
 		# json_jobs_waiting = json.load(json_data)
 		# json_jobs_waiting = json.load(json_data)
 		# print()
@@ -113,6 +115,26 @@ def schedule_job(json_jobs_waiting):
 										+ ":" + gateway_binaries_dir
 					ssh_burn_command = "ssh " + gateway_user + "@" +json_nodes_virt_id_phy_id[mote]['gateway'] + " '" + gateway_source_dir + "burn_telosb_test.py " \
 										+  "telosb " + json_nodes_virt_id_phy_id[mote]['serial_id'] + " " + gateway_binaries_dir + job['binary_file']  + "'"
+					print(scp_command)
+					logger.warn(scp_command)
+					print(ssh_burn_command)
+					logger.warn(ssh_burn_command)
+					t = ThreadBurnMote(result_id,job['type'],mote,scp_command,ssh_burn_command)
+					# t.start()
+					# t.join()
+					# num_threads_new = num_threads_new + 1
+					all_threads.append(t)
+
+
+			if(job['type'] == 'cc2650'):
+				for mote in job['mote_list']:
+					
+					print(mote, json_nodes_virt_id_phy_id[mote])
+					scp_command = "scp -v " + server_binaries_dir + job['binary_file'] + " "  + gateway_user + "@" + json_nodes_virt_id_phy_id[mote]['gateway'] \
+										+ ":" + gateway_binaries_dir
+					ssh_burn_command = "ssh " + gateway_user + "@" +json_nodes_virt_id_phy_id[mote]['gateway'] + \
+										" '/home/cirlab/flash_sensortag_linux_64/dslite.sh -c "\
+										 + json_nodes_virt_id_phy_id[mote]['flash_file'] + " -f " + gateway_binaries_dir + job['binary_file']  + "'"
 					print(scp_command)
 					print(ssh_burn_command)
 					t = ThreadBurnMote(result_id,job['type'],mote,scp_command,ssh_burn_command)

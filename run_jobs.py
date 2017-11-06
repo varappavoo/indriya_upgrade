@@ -42,18 +42,22 @@ class ThreadBurnMote (threading.Thread):
 		logger.warn("unlocking " + self.moteref)
 		print ("Exiting " + self.moteref)
 
-def run_cmd(command, success_identifier):
+def run_cmd(command, success_identifier, success=True):
 	p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE ) # stdout=subprocess.PIPE, shell=True)
 	(output, err) = p.communicate()
 	output = output.decode("utf-8")
 	err = err.decode("utf-8")
-	if(output.find(success_identifier) > -1 or err.find(success_identifier) > -1):
+	if(success and (output.find(success_identifier) > -1 or err.find(success_identifier) > -1)):
+		print("SUCCESS!!")
+		logger.info("SUCCESS:" + command)
+		return True
+	elif(!success and (!(output.find(success_identifier) > -1) or !(err.find(success_identifier) > -1))): # here we have an identifier for failure
 		print("SUCCESS!!")
 		logger.info("SUCCESS:" + command)
 		return True
 	else:
 		print("FAILURE!!")
-		logger.warning("FAILURE:" + command)
+		logger.warning("FAILURE:" + command + "\n\n" + output + "\n" + err)
 		return False
 
 def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command):# scp and burn
@@ -73,7 +77,7 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command):# scp
 			if motetype == 'telosb':
 				burn_done = "1" if(run_cmd(ssh_burn_command, "Programming: OK")) else "0"
 			elif motetype == 'cc2650':
-				burn_done = "1" if(run_cmd(ssh_burn_command, "")) else "0"
+				burn_done = "1" if(run_cmd(ssh_burn_command, "Failed:", False)) else "0"
 			count_burn_tries = count_burn_tries + 1
 			if count_burn_tries > 1:
 				sleep(WAIT_BEFORE_RETRY)
@@ -133,7 +137,7 @@ def schedule_job(json_jobs_waiting):
 					scp_command = "scp -v " + server_binaries_dir + job['binary_file'] + " "  + gateway_user + "@" + json_nodes_virt_id_phy_id[mote]['gateway'] \
 										+ ":" + gateway_binaries_dir
 					ssh_burn_command = "ssh " + gateway_user + "@" +json_nodes_virt_id_phy_id[mote]['gateway'] + \
-										" '/home/cirlab/flash_sensortag_linux_64/dslite.sh -c "\
+										" '/home/cirlab/flash_sensortag_linux_64/dslite.sh -v -c "\
 										 + json_nodes_virt_id_phy_id[mote]['flash_file'] + " -f " + gateway_binaries_dir + job['binary_file']  + "'"
 					print(scp_command)
 					print(ssh_burn_command)

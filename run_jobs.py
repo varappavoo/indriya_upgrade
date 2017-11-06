@@ -98,7 +98,7 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command, elf_f
 			logger.warning("Not attempting to burn as SCP was unsuccessful: \n" + scp_command)
 		print(burn_results[result_id])
 	else:
-		logger.info("file check FAILED: " + elf_file + " " motetype)
+		logger.info("file check FAILED: " + elf_file + " " + motetype)
 		burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "0"
 		burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"
 		burn_results[result_id]['job_config'][motetype][moteref]['error'] = "file format not supported for this mote"

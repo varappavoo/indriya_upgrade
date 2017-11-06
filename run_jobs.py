@@ -69,7 +69,8 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command):# scp
 
 	count_burn_tries = 1
 
-	burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "1" if(run_cmd(scp_command, "Exit status 0")) else "0"
+	# burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "1" if(run_cmd(scp_command, "Exit status 0")) else "0"
+	burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "1" if(run_cmd(scp_command, "rsync error", False)) else "0"
 	if burn_results[result_id]['job_config'][motetype][moteref]['scp'] == "1":
 		burn_done = "0"
 		while(count_burn_tries <= MAX_RETRIES_BURN and burn_done == "0"):
@@ -115,7 +116,10 @@ def schedule_job(json_jobs_waiting):
 				for mote in job['mote_list']:
 					
 					print(mote, json_nodes_virt_id_phy_id[mote])
-					scp_command = "scp -v " + server_binaries_dir + job['binary_file'] + " "  + gateway_user + "@" + json_nodes_virt_id_phy_id[mote]['gateway'] \
+					# scp_command = "scp -v " + server_binaries_dir + job['binary_file'] + " "  + gateway_user + "@" + json_nodes_virt_id_phy_id[mote]['gateway'] \
+										# + ":" + gateway_binaries_dir
+
+					scp_command = "rsync -av --ignore-existing " + server_binaries_dir + job['binary_file'] + " "  + gateway_user + "@" + json_nodes_virt_id_phy_id[mote]['gateway'] \
 										+ ":" + gateway_binaries_dir
 					ssh_burn_command = "ssh " + gateway_user + "@" +json_nodes_virt_id_phy_id[mote]['gateway'] + " '" + gateway_source_dir + "burn_telosb_test.py " \
 										+  "telosb " + json_nodes_virt_id_phy_id[mote]['serial_id'] + " " + gateway_binaries_dir + job['binary_file']  + "'"
@@ -134,7 +138,9 @@ def schedule_job(json_jobs_waiting):
 				for mote in job['mote_list']:
 					
 					print(mote, json_nodes_virt_id_phy_id[mote])
-					scp_command = "scp -v " + server_binaries_dir + job['binary_file'] + " "  + gateway_user + "@" + json_nodes_virt_id_phy_id[mote]['gateway'] \
+					# scp_command = "scp -v " + server_binaries_dir + job['binary_file'] + " "  + gateway_user + "@" + json_nodes_virt_id_phy_id[mote]['gateway'] \
+										# + ":" + gateway_binaries_dir
+					scp_command = "rsync -av --ignore-existing " + server_binaries_dir + job['binary_file'] + " "  + gateway_user + "@" + json_nodes_virt_id_phy_id[mote]['gateway'] \
 										+ ":" + gateway_binaries_dir
 					ssh_burn_command = "ssh " + gateway_user + "@" +json_nodes_virt_id_phy_id[mote]['gateway'] + \
 										" '/home/cirlab/flash_sensortag_linux_64/dslite.sh -v -c "\

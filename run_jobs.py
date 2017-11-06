@@ -79,7 +79,7 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command, elf_f
 
 	# burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "1" if(run_cmd(scp_command, "Exit status 0")) else "0"
 	if(check_binary_file(elf_file, motetype)):
-		logger.info("file check passed: " + elf_file + " " motetype)
+		logger.info("file check passed: " + elf_file + " " + motetype)
 		burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "1" if(run_cmd(scp_command, "rsync error", False)) else "0"
 		if burn_results[result_id]['job_config'][motetype][moteref]['scp'] == "1":
 			burn_done = "0"

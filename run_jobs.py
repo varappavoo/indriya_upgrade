@@ -51,7 +51,7 @@ def run_cmd(command, success_identifier, success=True):
 		print("SUCCESS!!")
 		logger.info("SUCCESS:" + command)
 		return True
-	elif(!success and (!(output.find(success_identifier) > -1) or !(err.find(success_identifier) > -1))): # here we have an identifier for failure
+	elif(not success and (not(output.find(success_identifier) > -1) or not(err.find(success_identifier) > -1))): # here we have an identifier for failure
 		print("SUCCESS!!")
 		logger.info("SUCCESS:" + command)
 		return True

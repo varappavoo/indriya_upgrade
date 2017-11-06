@@ -147,7 +147,7 @@ def process_job(json_data):
 	#	if(x): break
 	#	print("waiting for job",result_id,"to be processed!")
 	#	sleep(1)
-	tmp_job_lock.release() # just make sure that the burning is done :) waited for the burn to finish!
+	tmp_job_lock.release() # just make sure that the burning is done :)
 
 	mote_list_burnt = check_successful_burn(json_data)
 	if(len(mote_list_burnt) > 0):

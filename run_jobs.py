@@ -64,7 +64,7 @@ def run_cmd(command, success_identifier, success=True):
 def check_binary_file(elf_file, motetype):
 	if motetype == 'telosb':
 		file_type = 'ELF 32-bit LSB executable, TI msp430, version 1, statically linked, not stripped'
-	elif motetype = 'cc2650'
+	elif motetype == 'cc2650':
 		file_type = 'ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, not stripped'
 	return run_cmd('file ' + elf_file, file_type)
 
@@ -79,6 +79,7 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command, elf_f
 
 	# burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "1" if(run_cmd(scp_command, "Exit status 0")) else "0"
 	if(check_binary_file(elf_file, motetype)):
+		logger.info("file check passed: " + elf_file + " " motetype)
 		burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "1" if(run_cmd(scp_command, "rsync error", False)) else "0"
 		if burn_results[result_id]['job_config'][motetype][moteref]['scp'] == "1":
 			burn_done = "0"
@@ -97,6 +98,7 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command, elf_f
 			logger.warning("Not attempting to burn as SCP was unsuccessful: \n" + scp_command)
 		print(burn_results[result_id])
 	else:
+		logger.info("file check FAILED: " + elf_file + " " motetype)
 		burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "0"
 		burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"
 		burn_results[result_id]['job_config'][motetype][moteref]['error'] = "file format not supported for this mote"

@@ -51,7 +51,7 @@ def run_cmd(command, success_identifier, success=True):
 		print("SUCCESS!!")
 		logger.info("SUCCESS:" + command)
 		return True
-	elif(not success and (not(output.find(success_identifier) > -1) or not(err.find(success_identifier) > -1))): # here we have an identifier for failure
+	elif(not success and (not(output.find(success_identifier) > -1) or not(err.find(success_identifier) > -1))): # here we have an identifier for failure...
 		print("SUCCESS!!")
 		logger.info("SUCCESS:" + command)
 		return True
@@ -69,22 +69,22 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command):# scp
 
 	count_burn_tries = 1
 
-	# burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "1" if(run_cmd(scp_command, "Exit status 0")) else "0"
-	# if burn_results[result_id]['job_config'][motetype][moteref]['scp'] == "1":
-	burn_done = "0"
-	while(count_burn_tries <= MAX_RETRIES_BURN and burn_done == "0"):
-		logger.warning(moteref + " - BURNING TRY:" + str(count_burn_tries))
-		if motetype == 'telosb':
-			burn_done = "1" if(run_cmd(ssh_burn_command, "Programming: OK")) else "0"
-		elif motetype == 'cc2650':
-			burn_done = "1" if(run_cmd(ssh_burn_command, "Failed:", False)) else "0"
-		count_burn_tries = count_burn_tries + 1
-		if count_burn_tries > 1:
-			sleep(WAIT_BEFORE_RETRY)
-	burn_results[result_id]['job_config'][motetype][moteref]['burn'] = burn_done
-	# else:
-	# 	burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"
-	# 	logger.warning("Not attempting to burn as SCP was unsuccessful: \n" + scp_command)
+	burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "1" if(run_cmd(scp_command, "Exit status 0")) else "0"
+	if burn_results[result_id]['job_config'][motetype][moteref]['scp'] == "1":
+		burn_done = "0"
+		while(count_burn_tries <= MAX_RETRIES_BURN and burn_done == "0"):
+			logger.warning(moteref + " - BURNING TRY:" + str(count_burn_tries))
+			if motetype == 'telosb':
+				burn_done = "1" if(run_cmd(ssh_burn_command, "Programming: OK")) else "0"
+			elif motetype == 'cc2650':
+				burn_done = "1" if(run_cmd(ssh_burn_command, "Failed:", False)) else "0"
+			count_burn_tries = count_burn_tries + 1
+			if count_burn_tries > 1:
+				sleep(WAIT_BEFORE_RETRY)
+		burn_results[result_id]['job_config'][motetype][moteref]['burn'] = burn_done
+	else:
+		burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"
+		logger.warning("Not attempting to burn as SCP was unsuccessful: \n" + scp_command)
 	print(burn_results[result_id])
 
 
@@ -111,52 +111,41 @@ def schedule_job(json_jobs_waiting):
 			print(job)
 			burn_results[result_id]['result_id']=json_jobs_waiting['result_id']
 
-			scp_command = "scp -v " + server_binaries_dir + job['binary_file'] + " "  + gateway_user + "@" + json_nodes_virt_id_phy_id[mote]['gateway'] \
-					+ ":" + gateway_binaries_dir
-
-			copied = 1 if(run_cmd(scp_command, "Exit status 0")) else 0
-
-			burn_results[result_id]['job_config'][burn_results[result_id]['job_config']['binary_file']]={}
-			burn_results[result_id]['job_config'][burn_results[result_id]['job_config']['binary_file']]['scp'] = str(copied)
-
-			if(copied == "1"):
-				if(job['type'] == 'telosb'):
-					for mote in job['mote_list']:
-						
-						print(mote, json_nodes_virt_id_phy_id[mote])
-						# scp_command = "scp -v " + server_binaries_dir + job['binary_file'] + " "  + gateway_user + "@" + json_nodes_virt_id_phy_id[mote]['gateway'] \
-						# 					+ ":" + gateway_binaries_dir
-						ssh_burn_command = "ssh " + gateway_user + "@" +json_nodes_virt_id_phy_id[mote]['gateway'] + " '" + gateway_source_dir + "burn_telosb_test.py " \
-											+  "telosb " + json_nodes_virt_id_phy_id[mote]['serial_id'] + " " + gateway_binaries_dir + job['binary_file']  + "'"
-						print(scp_command)
-						logger.warn(scp_command)
-						print(ssh_burn_command)
-						logger.warn(ssh_burn_command)
-						t = ThreadBurnMote(result_id,job['type'],mote,scp_command,ssh_burn_command)
-						# t.start()
-						# t.join()
-						# num_threads_new = num_threads_new + 1
-						all_threads.append(t)
+			if(job['type'] == 'telosb'):
+				for mote in job['mote_list']:
+					
+					print(mote, json_nodes_virt_id_phy_id[mote])
+					scp_command = "scp -v " + server_binaries_dir + job['binary_file'] + " "  + gateway_user + "@" + json_nodes_virt_id_phy_id[mote]['gateway'] \
+										+ ":" + gateway_binaries_dir
+					ssh_burn_command = "ssh " + gateway_user + "@" +json_nodes_virt_id_phy_id[mote]['gateway'] + " '" + gateway_source_dir + "burn_telosb_test.py " \
+										+  "telosb " + json_nodes_virt_id_phy_id[mote]['serial_id'] + " " + gateway_binaries_dir + job['binary_file']  + "'"
+					print(scp_command)
+					logger.warn(scp_command)
+					print(ssh_burn_command)
+					logger.warn(ssh_burn_command)
+					t = ThreadBurnMote(result_id,job['type'],mote,scp_command,ssh_burn_command)
+					# t.start()
+					# t.join()
+					# num_threads_new = num_threads_new + 1
+					all_threads.append(t)
 
 
-				if(job['type'] == 'cc2650'):
-					for mote in job['mote_list']:
-						
-						print(mote, json_nodes_virt_id_phy_id[mote])
-						# scp_command = "scp -v " + server_binaries_dir + job['binary_file'] + " "  + gateway_user + "@" + json_nodes_virt_id_phy_id[mote]['gateway'] \
-						# 					+ ":" + gateway_binaries_dir
-						ssh_burn_command = "ssh " + gateway_user + "@" +json_nodes_virt_id_phy_id[mote]['gateway'] + \
-											" '/home/cirlab/flash_sensortag_linux_64/dslite.sh -v -c "\
-											 + json_nodes_virt_id_phy_id[mote]['flash_file'] + " -f " + gateway_binaries_dir + job['binary_file']  + "'"
-						print(scp_command)
-						print(ssh_burn_command)
-						t = ThreadBurnMote(result_id,job['type'],mote,scp_command,ssh_burn_command)
-						# t.start()
-						# t.join()
-						# num_threads_new = num_threads_new + 1
-						all_threads.append(t)
-			else:
-				logger.warning("Not attempting to burn as SCP was unsuccessful: " + result_id)
+			if(job['type'] == 'cc2650'):
+				for mote in job['mote_list']:
+					
+					print(mote, json_nodes_virt_id_phy_id[mote])
+					scp_command = "scp -v " + server_binaries_dir + job['binary_file'] + " "  + gateway_user + "@" + json_nodes_virt_id_phy_id[mote]['gateway'] \
+										+ ":" + gateway_binaries_dir
+					ssh_burn_command = "ssh " + gateway_user + "@" +json_nodes_virt_id_phy_id[mote]['gateway'] + \
+										" '/home/cirlab/flash_sensortag_linux_64/dslite.sh -v -c "\
+										 + json_nodes_virt_id_phy_id[mote]['flash_file'] + " -f " + gateway_binaries_dir + job['binary_file']  + "'"
+					print(scp_command)
+					print(ssh_burn_command)
+					t = ThreadBurnMote(result_id,job['type'],mote,scp_command,ssh_burn_command)
+					# t.start()
+					# t.join()
+					# num_threads_new = num_threads_new + 1
+					all_threads.append(t)
 
 		print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
 		#while threading.activeCount() > num_threads:

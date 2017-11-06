@@ -162,7 +162,9 @@ def schedule_job(json_jobs_waiting):
 										 + json_nodes_virt_id_phy_id[mote]['flash_file'] + " -f " + gateway_binaries_dir + job['binary_file']  + "'"
 					print(scp_command)
 					print(ssh_burn_command)
-					t = ThreadBurnMote(result_id,job['type'],mote,scp_command,ssh_burn_command)
+					
+					elf_file = server_binaries_dir + job['binary_file']
+					t = ThreadBurnMote(result_id,job['type'],mote,scp_command,ssh_burn_command, elf_file)
 					# t.start()
 					# t.join()
 					# num_threads_new = num_threads_new + 1

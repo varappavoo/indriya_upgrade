@@ -25,19 +25,20 @@ with open('nodes_virt_id_phy_id.json') as json_data:
 	json_nodes_virt_id_phy_id = json.load(json_data)
 
 class ThreadBurnMote (threading.Thread):
-	def __init__(self, result_id, motetype, moteref, scp_command, ssh_burn_command):
+	def __init__(self, result_id, motetype, moteref, scp_command, ssh_burn_command, elf_file):
 		threading.Thread.__init__(self)
 		self.result_id = result_id
 		self.motetype = motetype
 		self.moteref = moteref
 		self.scp_command = scp_command
 		self.ssh_burn_command = ssh_burn_command
+		self.elf_file = elf_file
 	def run(self):
 		print ("Starting " + self.moteref)
 		logger.warn("locking " + self.moteref)
 		tmp_mote_lock = fasteners.InterProcessLock('/tmp/tmp_mote_lock_' + self.moteref)
 		x = tmp_mote_lock.acquire(blocking=True)
-		execute_job(self.result_id, self.motetype, self.moteref, self.scp_command, self.ssh_burn_command)
+		execute_job(self.result_id, self.motetype, self.moteref, self.scp_command, self.ssh_burn_command, self.elf_file)
 		tmp_mote_lock.release()
 		logger.warn("unlocking " + self.moteref)
 		print ("Exiting " + self.moteref)
@@ -60,7 +61,14 @@ def run_cmd(command, success_identifier, success=True):
 		logger.warning("FAILURE:" + command + "\n\n" + output + "\n" + err)
 		return False
 
-def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command):# scp and burn
+def check_binary_file(elf_file, motetype):
+	if motetype == 'telosb':
+		file_type = 'ELF 32-bit LSB executable, TI msp430, version 1, statically linked, not stripped'
+	elif motetype = 'cc2650'
+		file_type = 'ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, not stripped'
+	return run_cmd('file ' + elf_file, file_type)
+
+def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command, elf_file):# scp and burn
 	global burn_results
 	if burn_results[result_id]['job_config'].get(motetype) == None:
 		burn_results[result_id]['job_config'][motetype] = {}
@@ -70,24 +78,28 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command):# scp
 	count_burn_tries = 1
 
 	# burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "1" if(run_cmd(scp_command, "Exit status 0")) else "0"
-	burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "1" if(run_cmd(scp_command, "rsync error", False)) else "0"
-	if burn_results[result_id]['job_config'][motetype][moteref]['scp'] == "1":
-		burn_done = "0"
-		while(count_burn_tries <= MAX_RETRIES_BURN and burn_done == "0"):
-			logger.warning(moteref + " - BURNING TRY:" + str(count_burn_tries))
-			if motetype == 'telosb':
-				burn_done = "1" if(run_cmd(ssh_burn_command, "Programming: OK")) else "0"
-			elif motetype == 'cc2650':
-				burn_done = "1" if(run_cmd(ssh_burn_command, "Failed:", False)) else "0"
-			count_burn_tries = count_burn_tries + 1
-			if count_burn_tries > 1:
-				sleep(WAIT_BEFORE_RETRY)
-		burn_results[result_id]['job_config'][motetype][moteref]['burn'] = burn_done
+	if(check_binary_file(elf_file, motetype)):
+		burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "1" if(run_cmd(scp_command, "rsync error", False)) else "0"
+		if burn_results[result_id]['job_config'][motetype][moteref]['scp'] == "1":
+			burn_done = "0"
+			while(count_burn_tries <= MAX_RETRIES_BURN and burn_done == "0"):
+				logger.warning(moteref + " - BURNING TRY:" + str(count_burn_tries))
+				if motetype == 'telosb':
+					burn_done = "1" if(run_cmd(ssh_burn_command, "Programming: OK")) else "0"
+				elif motetype == 'cc2650':
+					burn_done = "1" if(run_cmd(ssh_burn_command, "Failed:", False)) else "0"
+				count_burn_tries = count_burn_tries + 1
+				if count_burn_tries > 1:
+					sleep(WAIT_BEFORE_RETRY)
+			burn_results[result_id]['job_config'][motetype][moteref]['burn'] = burn_done
+		else:
+			burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"
+			logger.warning("Not attempting to burn as SCP was unsuccessful: \n" + scp_command)
+		print(burn_results[result_id])
 	else:
+		burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "0"
 		burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"
-		logger.warning("Not attempting to burn as SCP was unsuccessful: \n" + scp_command)
-	print(burn_results[result_id])
-
+		burn_results[result_id]['job_config'][motetype][moteref]['error'] = "file format not supported for this mote"
 
 
 def schedule_job(json_jobs_waiting):
@@ -127,7 +139,8 @@ def schedule_job(json_jobs_waiting):
 					logger.warn(scp_command)
 					print(ssh_burn_command)
 					logger.warn(ssh_burn_command)
-					t = ThreadBurnMote(result_id,job['type'],mote,scp_command,ssh_burn_command)
+					elf_file = server_binaries_dir + job['binary_file']
+					t = ThreadBurnMote(result_id,job['type'],mote,scp_command,ssh_burn_command, elf_file)
 					# t.start()
 					# t.join()
 					# num_threads_new = num_threads_new + 1

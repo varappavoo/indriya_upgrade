@@ -109,7 +109,9 @@ def schedule_job(json_jobs_waiting):
 		result_id = json_jobs_waiting['result_id']
 
 		tmp_job_lock = fasteners.InterProcessLock('/tmp/tmp_job_lock_' + result_id)
+		logger.info("trying to lock job for " + result_id)
 		tmp_job_lock.acquire(blocking=True)
+		logger.info("obtained to lock job for " + result_id)
 
 		burn_results[result_id] = {}
 		# with open('jobs_waiting.json') as json_data:

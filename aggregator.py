@@ -65,11 +65,13 @@ def savetodb_batching(json_data,active_users):
 	# current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
 	# sleep(0.00001)
+	print("json_data['value']",json_data['value'])
+	value = json_data['value'] if json_data['value'] != "" else " "
 	json_body.append({
 		"measurement": table,
 		"time": json_data['time'],
 		"tags": {"nodeid": json_data['nodeid']},
-		"fields": {"value": json_data['value']}
+		"fields": {"value": }
 	})
 	count=count+1
 	# except:

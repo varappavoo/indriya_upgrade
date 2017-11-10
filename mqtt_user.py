@@ -2,6 +2,11 @@
 import random
 import fasteners
 import subprocess
+from _thread import start_new_thread
+
+import logging
+logging.config.fileConfig('logging.conf')
+logger = logging.getLogger('indriya_main')
 
 def run_cmd(command, success_identifier=""):
         p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE ) # stdout=subproc$
@@ -24,6 +29,20 @@ def generate_password():
 	for i in range(16):
 		password += random.choice(characters)
 	return password
+
+def send_email(user,password):
+	email_command = 'sendEmail -f indriyaplus@gmail.com -t '+ user + '@gmail.com -u "indriya++ mqtt credential"  -m "username: ' + user + '\npassword:' + password + '\n\nEnjoy :)"-s smtp.gmail.com:587 -o tls=yes -xu indriyaplus@gmail.com -xp indriyaplus -cc "pappavoo@comp.nus.edu.sg"'
+	print(email_command)
+	email_sent = run_cmd(email_command,"successfully!")
+	if not email_sent:
+		for i in range(2):
+			sleep(5)
+			email_sent = run_cmd(email_command,"successfully!")
+			if email_sent:
+				break
+	msg = "email sent to " + user if(email_sent) else "email not sent to " + user + " " + password
+	logger.warn(msg)
+
 
 
 def add_new_mqtt_user(user):
@@ -54,6 +73,7 @@ def add_new_mqtt_user(user):
 			#finally:
 			#mosquitto_lock.release()
 	if(success):
+		start_new_thread(send_email,(user, password,))
 		return password
 	else:
 		return None

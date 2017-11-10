@@ -58,7 +58,11 @@ def update_jobs():
 	pass
 
 def execute_request(start,json_body):
-	result =  client.write_points(json_body)#,time_precision='u')   
+	try:
+		result =  client.write_points(json_body)#,time_precision='u')   
+	except:
+		print(traceback.print_exc())
+		logger.warn("ERROR INFLUX writing data: write_points")
 
 def savetodb_batching(json_data,active_users):
 	global json_body, count, start, tmp_time, mqtt_client
@@ -71,7 +75,7 @@ def savetodb_batching(json_data,active_users):
 		"measurement": table,
 		"time": json_data['time'],
 		"tags": {"nodeid": json_data['nodeid']},
-		"fields": {"value": }
+		"fields": {"value": value}
 	})
 	count=count+1
 	# except:

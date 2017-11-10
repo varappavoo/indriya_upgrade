@@ -62,6 +62,7 @@ def execute_request(start,json_body):
 		result =  client.write_points(json_body)#,time_precision='u')   
 	except:
 		print(traceback.print_exc())
+		print(">>>>>>>json_data\n",json_data)
 		logger.warn("ERROR INFLUX writing data: write_points")
 
 def savetodb_batching(json_data,active_users):

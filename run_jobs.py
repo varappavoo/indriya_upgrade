@@ -14,6 +14,7 @@ from zip_job_data import *
 
 MAX_RETRIES_BURN = 3
 WAIT_BEFORE_RETRY = 5
+MAX_TIME_TO_WAIT_FOR_LOCK_ON_MOTE = 30
 
 logging.config.fileConfig('logging.conf')
 
@@ -33,15 +34,52 @@ class ThreadBurnMote (threading.Thread):
 		self.scp_command = scp_command
 		self.ssh_burn_command = ssh_burn_command
 		self.elf_file = elf_file
+		self.count = 0
 	def run(self):
 		print ("Starting " + self.moteref)
 		logger.warn("locking " + self.moteref)
 		tmp_mote_lock = fasteners.InterProcessLock('/tmp/tmp_mote_lock_' + self.moteref)
-		x = tmp_mote_lock.acquire(blocking=True)
-		execute_job(self.result_id, self.motetype, self.moteref, self.scp_command, self.ssh_burn_command, self.elf_file)
-		tmp_mote_lock.release()
-		logger.warn("unlocking " + self.moteref)
-		print ("Exiting " + self.moteref)
+
+		while(True):
+			x = tmp_mote_lock.acquire(blocking=False)
+			try:
+				if x:
+					logger.warn('got lock on mote ' + self.moteref)
+					# x = tmp_mote_lock.acquire(blocking=True)
+					execute_job(self.result_id, self.motetype, self.moteref, self.scp_command, self.ssh_burn_command, self.elf_file)
+					tmp_mote_lock.release()
+					logger.warn("unlocking " + self.moteref)
+					print ("Exiting " + self.moteref)
+					break
+				else:
+					self.count += 1 
+					logger.warn('not getting lock on mote ' + self.moteref + ', try ' + str(self.count))
+					if self.count < MAX_TIME_TO_WAIT_FOR_LOCK_ON_MOTE:
+						sleep(1)
+					else:
+						global burn_results
+						result_id = self.result_id
+						motetype = self.motetype
+						moteref = self.moteref
+						if burn_results[result_id]['job_config'].get(motetype) == None:
+							burn_results[result_id]['job_config'][motetype] = {}
+						burn_results[result_id]['job_config'][motetype][moteref]={}
+						burn_results[result_id]['job_config'][motetype][moteref]['cluster_rsync'] = "0"
+						burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"
+						burn_results[result_id]['job_config'][motetype][moteref]['error'] = "could not lock mote for buring"
+						break
+			except:
+				traceback.print_stack()
+				global burn_results
+				if burn_results[result_id]['job_config'].get(motetype) == None:
+					burn_results[result_id]['job_config'][motetype] = {}
+				burn_results[result_id]['job_config'][motetype][moteref]={}
+				burn_results[result_id]['job_config'][motetype][moteref]['cluster_rsync'] = "0"
+				burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"
+				burn_results[result_id]['job_config'][motetype][moteref]['error'] = "could not lock mote for buring"
+
+
+
 
 def run_cmd(command, success_identifier, success=True):
 	p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE ) # stdout=subprocess.PIPE, shell=True)
@@ -77,32 +115,35 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command, elf_f
 
 	count_burn_tries = 1
 
-	# burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "1" if(run_cmd(scp_command, "Exit status 0")) else "0"
-	if(check_binary_file(elf_file, motetype)):
-		logger.info("file check passed: " + elf_file + " " + motetype)
-		burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "1" if(run_cmd(scp_command, "rsync error", False)) else "0"
-		if burn_results[result_id]['job_config'][motetype][moteref]['scp'] == "1":
-			burn_done = "0"
-			while(count_burn_tries <= MAX_RETRIES_BURN and burn_done == "0"):
-				logger.warning(moteref + " - BURNING TRY:" + str(count_burn_tries))
-				if motetype == 'telosb':
-					burn_done = "1" if(run_cmd(ssh_burn_command, "Programming: OK")) else "0"
-				elif motetype == 'cc2650':
-					burn_done = "1" if(run_cmd(ssh_burn_command, "Failed:", False)) else "0"
-				count_burn_tries = count_burn_tries + 1
-				if count_burn_tries > 1:
-					sleep(WAIT_BEFORE_RETRY)
-			burn_results[result_id]['job_config'][motetype][moteref]['burn'] = burn_done
+	try:
+		# burn_results[result_id]['job_config'][motetype][moteref]['cluster_rsync'] = "1" if(run_cmd(scp_command, "Exit status 0")) else "0"
+		if(check_binary_file(elf_file, motetype)):
+			logger.info("file check passed: " + elf_file + " " + motetype)
+			burn_results[result_id]['job_config'][motetype][moteref]['cluster_rsync'] = "1" if(run_cmd(scp_command, "rsync error", False)) else "0"
+			if burn_results[result_id]['job_config'][motetype][moteref]['cluster_rsync'] == "1":
+				burn_done = "0"
+				while(count_burn_tries <= MAX_RETRIES_BURN and burn_done == "0"):
+					logger.warning(moteref + " - BURNING TRY:" + str(count_burn_tries))
+					if motetype == 'telosb':
+						burn_done = "1" if(run_cmd(ssh_burn_command, "Programming: OK")) else "0"
+					elif motetype == 'cc2650':
+						burn_done = "1" if(run_cmd(ssh_burn_command, "Failed:", False)) else "0"
+					count_burn_tries = count_burn_tries + 1
+					if count_burn_tries > 1:
+						sleep(WAIT_BEFORE_RETRY)
+				burn_results[result_id]['job_config'][motetype][moteref]['burn'] = burn_done
+			else:
+				burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"
+				logger.warning("Not attempting to burn as SCP was unsuccessful: \n" + scp_command)
+			print(burn_results[result_id])
 		else:
+			logger.info("file check FAILED: " + elf_file + " " + motetype)
+			burn_results[result_id]['job_config'][motetype][moteref]['cluster_rsync'] = "0"
 			burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"
-			logger.warning("Not attempting to burn as SCP was unsuccessful: \n" + scp_command)
-		print(burn_results[result_id])
-	else:
-		logger.info("file check FAILED: " + elf_file + " " + motetype)
-		burn_results[result_id]['job_config'][motetype][moteref]['scp'] = "0"
-		burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"
-		burn_results[result_id]['job_config'][motetype][moteref]['error'] = "file format not supported for this mote"
-
+			burn_results[result_id]['job_config'][motetype][moteref]['error'] = "file format not supported for this mote"
+	except:
+		burn_results[result_id]['job_config'][motetype][moteref]['error'] = "job execution exception"
+		traceback.print_stack()
 
 def schedule_job(json_jobs_waiting):
 		global burn_results
@@ -193,6 +234,8 @@ def schedule_job(json_jobs_waiting):
 		#burn_results.pop(result_id, None)
 
 		save_burn_log(json_jobs_waiting, burn_results)
+		logger.info("save burn results_1:" + str(json_jobs_waiting))
+		logger.info("save burn results_2:" + str(burn_results))
 		tmp_job_lock.release()
 
 		return results

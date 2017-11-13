@@ -32,7 +32,7 @@ def generate_password():
 	return password
 
 def send_email(user,password):
-	email_command = 'sendEmail -f indriyaplus@gmail.com -t ' + user + ' -u "indriya++ mqtt credential"  -m "username: ' + user + '\npassword: ' + password + '\n\nYou may\n(1) subscribe using:\nmosquitto_sub -h ocean.comp.nus.edu.sg -t \'#\' -u username -P password\n\n,and (2) publish using:\nmosquitto_pub -h ocean.comp.nus.edu.sg -t \'username/pull/nodeid\' -m \'data that the node pulls goes here\' -u username -P password\n\n\nReal Time Data for Real Time Decisions :)" -s smtp.gmail.com:587 -o tls=yes -xu indriyaplus@gmail.com -xp indriyaplusplus -cc "pappavoo@comp.nus.edu.sg"'
+	email_command = 'sendEmail -f indriyaplus@gmail.com -t ' + user + ' -u "indriya++ mqtt credential"  -m "username: ' + user + '\npassword: ' + password + '\n\nYou may\n(1) subscribe using:\nmosquitto_sub -h ocean.comp.nus.edu.sg -t \'#\' -u username -P password\n\n,and (2) publish using:\nmosquitto_pub -h ocean.comp.nus.edu.sg -t \'username/push/nodeid\' -m \'data that the node pulls goes here\' -u username -P password\n\n\nReal Time Data for Real Time Decisions :)" -s smtp.gmail.com:587 -o tls=yes -xu indriyaplus@gmail.com -xp indriyaplusplus -cc "pappavoo@comp.nus.edu.sg"'
 	print(email_command)
 	email_sent = run_cmd(email_command,"successfully!")
 	if not email_sent:

@@ -66,7 +66,7 @@ class ThreadBurnMote (threading.Thread):
 						burn_results[result_id]['job_config'][motetype][moteref]={}
 						burn_results[result_id]['job_config'][motetype][moteref]['cluster_rsync'] = "0"
 						burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"
-						burn_results[result_id]['job_config'][motetype][moteref]['error'] = "could not lock mote for buring"
+						burn_results[result_id]['job_config'][motetype][moteref]['error'] = "could not lock mote"
 						break
 			except:
 				traceback.print_stack()
@@ -76,7 +76,7 @@ class ThreadBurnMote (threading.Thread):
 				burn_results[result_id]['job_config'][motetype][moteref]={}
 				burn_results[result_id]['job_config'][motetype][moteref]['cluster_rsync'] = "0"
 				burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"
-				burn_results[result_id]['job_config'][motetype][moteref]['error'] = "could not lock mote for buring"
+				burn_results[result_id]['job_config'][motetype][moteref]['error'] = "could not lock mote"
 
 
 

@@ -74,7 +74,7 @@ def save_burn_log(json_data, burn_results):
 	working_dir = RESULT_DIRECTORY + result_id + "/"
 	run_cmd("mkdir -p " + working_dir)
 	filename =  working_dir + result_id +".log.json"
-	# logger.info("TODO: save burn log file: " + filename)
+	logger.info("TODO: save burn log file: " + filename)
 	with open(filename,"w") as file_output:
 		 json.dump(burn_results, file_output)
 		 logger.info("burn log file saved: " + filename)
@@ -88,19 +88,23 @@ def read_burn_log(json_data):
 	filename =  working_dir + result_id +".log.json"
 	# logger.info("TODO: save burn log file: " + filename)
 	burn_results = "{}"
-	try:
 
-		with open(filename,"r") as file_input:
-			burn_results = json.load(file_input)
-			burn_results = burn_results[list(burn_results.keys())[0]]
-			# logger.info("burn log file saved: " + filename)
-			# burn_results = json.loads(file_input.readlines()[0])
-			# burn_results = burn_results[burn_results.key()]
-			# burn_results = file_input.readlines()[0]
+	if(os.path.isfile(filename)):
+		try:
 
-	except:
-		burn_results = "{}"
-		traceback.print_stack()
+			with open(filename,"r") as file_input:
+				burn_results = json.load(file_input)
+				burn_results = burn_results[list(burn_results.keys())[0]]
+				# logger.info("burn log file saved: " + filename)
+				# burn_results = json.loads(file_input.readlines()[0])
+				# burn_results = burn_results[burn_results.key()]
+				# burn_results = file_input.readlines()[0]
+
+		except:
+			burn_results = "{}"
+			traceback.print_stack()
+	else:
+		logger.warn("result file not found" + str(filename))
 	return burn_results
 
 #with open('alice_jobs.json') as data_file:    

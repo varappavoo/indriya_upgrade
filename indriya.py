@@ -271,6 +271,7 @@ def active_jobs():
 @app.route("/get_burn_results", methods=['GET','POST'])
 def get_burn_results():
 	json_data = request.json
+	print("/get_burn_results",json_data)
 	data = read_burn_log(json_data)
 	return str(data)
 

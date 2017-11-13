@@ -79,6 +79,7 @@ def accept_rt_input(active_users):
 	client.connect(broker)
 	client.loop_start() 
 	print("subscribing ")
+	client.subscribe("+/push/#") # + wildcard for single level wildcard
 	client.subscribe("+/pull/#") # + wildcard for single level wildcard
 	while(1):
 		time.sleep(10)

@@ -47,32 +47,33 @@ def send_email(user,password):
 
 
 def add_new_mqtt_user(user):
-	password = generate_password()
 	success = 0
-	mosquitto_lock = fasteners.InterProcessLock('/tmp/tmp_mosquitto_lock_file')
-	while 1:
-			mosquitto_lock_acquired = mosquitto_lock.acquire(blocking=False)
-			#try:
-			if(mosquitto_lock_acquired):
-				# update mosquitto_passwd, mosquitto_acl
-				mosquitto_passwd_file = "/home/cirlab/indriya_upgrade/mosquitto_passwd"
-				mosquitto_acl_file = "/home/cirlab/indriya_upgrade/mosquitto_acl"
-				with open(mosquitto_acl_file, 'a') as f:
-					f.write('\n')
-					f.write('user ' + user + '\n')
-					f.write('topic readwrite ' + user + '/#\n')
-					f.close()
-				mos_pass_cmd = "mosquitto_passwd -b " + mosquitto_passwd_file + " " + user + " " + password
-				run_cmd(mos_pass_cmd)
-				success = 1
-				#print("releasing")
-				mosquitto_lock.release()
-				#print("released")
-				break
-			else:
-				sleep(1)
-			#finally:
-			#mosquitto_lock.release()
+	if user != "":
+		password = generate_password()
+		mosquitto_lock = fasteners.InterProcessLock('/tmp/tmp_mosquitto_lock_file')
+		while 1:
+				mosquitto_lock_acquired = mosquitto_lock.acquire(blocking=False)
+				#try:
+				if(mosquitto_lock_acquired):
+					# update mosquitto_passwd, mosquitto_acl
+					mosquitto_passwd_file = "/home/cirlab/indriya_upgrade/mosquitto_passwd"
+					mosquitto_acl_file = "/home/cirlab/indriya_upgrade/mosquitto_acl"
+					with open(mosquitto_acl_file, 'a') as f:
+						f.write('\n')
+						f.write('user ' + user + '\n')
+						f.write('topic readwrite ' + user + '/#\n')
+						f.close()
+					mos_pass_cmd = "mosquitto_passwd -b " + mosquitto_passwd_file + " " + user + " " + password
+					run_cmd(mos_pass_cmd)
+					success = 1
+					#print("releasing")
+					mosquitto_lock.release()
+					#print("released")
+					break
+				else:
+					sleep(1)
+				#finally:
+				#mosquitto_lock.release()
 	if(success):
 		start_new_thread(send_email,(user, password,))
 		return password

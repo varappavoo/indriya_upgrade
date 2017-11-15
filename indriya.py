@@ -323,7 +323,7 @@ def check_binary():
 	binary_file = server_binaries_dir + json_data['binary_file']
 	motetype = json_data['type']
 	logger.info("checking binary file " + str(binary_file) + " for type " + str(motetype))
-	if(run_jobs.check_binary_file(elf_file, motetype)):
+	if(run_jobs.check_binary_file(binary_file, motetype)):
 		json_data['result'] = '1'
 	else:
 		json_data['result'] = '0'

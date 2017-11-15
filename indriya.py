@@ -316,6 +316,18 @@ def new_mqtt_user():
 		mqtt_user['result'] = '0'
 	return str(mqtt_user)
 
+@app.route("/check_binary", methods=['POST'])
+def check_binary():
+	json_data = request.json #	{"binary_file":"beacon.sky", "type":"telosb"}
+	binary_file = json_data['binary_file']
+	motetype = json_data['type']
+	if(run_jobs.check_binary_file(elf_file, motetype)):
+		json_data['result'] = '1'
+	else:
+		json_data['result'] = '0'
+	return str(json_data)
+
+
 
 #@app.route("/active_users", methods=['POST'])
 #def users():

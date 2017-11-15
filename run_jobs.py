@@ -104,6 +104,9 @@ def check_binary_file(elf_file, motetype):
 		file_type = 'ELF 32-bit LSB executable, TI msp430, version 1, statically linked, not stripped'
 	elif motetype == 'cc2650':
 		file_type = 'ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, not stripped'
+	else:
+		logger.warn("system does not support for binary file of type " + motetype)
+		return False
 	return run_cmd('file ' + elf_file, file_type)
 
 def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command, elf_file):# scp and burn

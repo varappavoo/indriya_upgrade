@@ -9,6 +9,7 @@ from sub_nodeid_rt_input import *
 from zip_job_data import *
 import fasteners
 from mqtt_user import *
+from run_config import *
 
 import sched
 from _thread import start_new_thread
@@ -319,8 +320,9 @@ def new_mqtt_user():
 @app.route("/check_binary", methods=['POST'])
 def check_binary():
 	json_data = request.json #	{"binary_file":"beacon.sky", "type":"telosb"}
-	binary_file = json_data['binary_file']
+	binary_file = server_binaries_dir + json_data['binary_file']
 	motetype = json_data['type']
+	logger.info("checking binary file " + str(binary_file) + " for type " + str(motetype))
 	if(run_jobs.check_binary_file(elf_file, motetype)):
 		json_data['result'] = '1'
 	else:

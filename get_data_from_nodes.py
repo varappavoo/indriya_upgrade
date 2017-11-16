@@ -129,85 +129,98 @@ def check_nodes_status_from_db(manager_proxy_nodes_status, active_users):
 def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 
 	tmp_mote_lock = fasteners.InterProcessLock('/tmp/tmp_mote_lock_' + nodeid)
-	x = tmp_mote_lock.acquire(blocking=True)
-
-	logger.info("ATTEMPTING TO CREATE SOCKET to server/node " + str(nodeid) +  "@" + gateway +":"+ str(port))
-	sock_node = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-	sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
-	# sock_node.connect((json_nodes_virt_id_phy_id[nodeid]['gateway'],json_nodes_virt_id_phy_id[nodeid]['port']))
-	sock_node.connect((gateway, port))
-
-
-	sock_aggr_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	sock_aggr_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-	sock_aggr_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
-	sock_aggr_server.connect((server_aggr_ip, server_aggr_port))
-
-	sock_rt_stream_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
-
-	last_dangling_chunk = ""
-
-	count=0
-	while True:
-		if(manager_proxy_nodes_status[nodeid]):
-
-			#print("PROCESS","manager_proxy_nodes_status['111']",manager_proxy_nodes_status['111'])
-
-			# print("connecting to node", nodeid)
-			try:
-				data_received = sock_node.recv(4096)
-				if not data_received: break
-				# data_received = data_received
-				data_received = data_received.decode('utf-8','ignore')
-				if('\n' in data_received):
-					data_received_split = data_received.split('\n')
-					# data_received_split = data_received.split('\n')
-					for i in range(len(data_received_split) - 1): # last chunk is likely to be incomplete
-						json_data ={}#'{"nodeid":' + nodeid', "value": "123456789012345678901234567890123456789012345678901234567890abcdxyz"}'
-						count = count + 1
-						json_data['nodeid'] = nodeid
-						if i == 0: 
-							json_data['value'] = last_dangling_chunk + data_received_split[0]
-						else:
-							json_data['value'] = data_received_split[i]
-	
-						data_string = json.dumps(json_data)
-						print(data_string)
-						# sock_server.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte
-						sock_aggr_server.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte
-						sock_rt_stream_udp.sendto(str.encode(data_string,'utf-8') + str.encode("\n"), ('localhost', UDP_PORT+int(nodeid)))
-						print(UDP_PORT+int(nodeid))
-					last_dangling_chunk = data_received_split[-1]
-				else:
-					last_dangling_chunk = last_dangling_chunk + data_received
-			except:
-				print(traceback.print_exc())
-				print("SOCKET ERR to server/node", nodeid)
-				manager_proxy_nodes_status[nodeid]=0
-				print("4 except")
-				print(manager_proxy_nodes_status)
-				# list_of_nodes_running.remove(nodeid)
-				sock_aggr_server.close()
-				sock_node.close()
-				logger.warning("SOCKET ERR to server/node " + str(nodeid))
-				tmp_mote_lock.release()
-				break
-		else:
+	# x = tmp_mote_lock.acquire(blocking=True)
+	while(True):
+		x = tmp_mote_lock.acquire(blocking=False)
+		if x:
 			break
+		else:
+			logger.warn('waiting to get lock on mote ' + self.moteref)
+			sleep(1)
+			if not (manager_proxy_nodes_status[nodeid]):
+				break
 
-	print("closing socket to server and node", nodeid)
-	logger.warning("CLOSING SOCKET to server/node " + str(nodeid))
-	tmp_mote_lock.release()
-	# sleep(5)
-	# print("5 ERR")
-	manager_proxy_nodes_status[nodeid]=0
-	print(manager_proxy_nodes_status)
-	# if nodeid in list_of_nodes_running:
-	# 	list_of_nodes_running.remove(nodeid)
-	sock_aggr_server.close()
-	sock_node.shutdown(socket.SHUT_RDWR)
-	sock_node.close()
+
+	if (manager_proxy_nodes_status[nodeid]):
+		logger.info("ATTEMPTING TO CREATE SOCKET to server/node " + str(nodeid) +  "@" + gateway +":"+ str(port))
+		sock_node = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+		sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
+		# sock_node.connect((json_nodes_virt_id_phy_id[nodeid]['gateway'],json_nodes_virt_id_phy_id[nodeid]['port']))
+		sock_node.connect((gateway, port))
+
+
+		sock_aggr_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		sock_aggr_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+		sock_aggr_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
+		sock_aggr_server.connect((server_aggr_ip, server_aggr_port))
+
+		sock_rt_stream_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+
+		last_dangling_chunk = ""
+
+		count=0
+		while True:
+			if(manager_proxy_nodes_status[nodeid]):
+
+				#print("PROCESS","manager_proxy_nodes_status['111']",manager_proxy_nodes_status['111'])
+
+				# print("connecting to node", nodeid)
+				try:
+					data_received = sock_node.recv(4096)
+					if not data_received: break
+					# data_received = data_received
+					data_received = data_received.decode('utf-8','ignore')
+					if('\n' in data_received):
+						data_received_split = data_received.split('\n')
+						# data_received_split = data_received.split('\n')
+						for i in range(len(data_received_split) - 1): # last chunk is likely to be incomplete
+							json_data ={}#'{"nodeid":' + nodeid', "value": "123456789012345678901234567890123456789012345678901234567890abcdxyz"}'
+							count = count + 1
+							json_data['nodeid'] = nodeid
+							if i == 0: 
+								json_data['value'] = last_dangling_chunk + data_received_split[0]
+							else:
+								json_data['value'] = data_received_split[i]
+		
+							data_string = json.dumps(json_data)
+							print(data_string)
+							# sock_server.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte
+							sock_aggr_server.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte
+							sock_rt_stream_udp.sendto(str.encode(data_string,'utf-8') + str.encode("\n"), ('localhost', UDP_PORT+int(nodeid)))
+							print(UDP_PORT+int(nodeid))
+						last_dangling_chunk = data_received_split[-1]
+					else:
+						last_dangling_chunk = last_dangling_chunk + data_received
+				except:
+					print(traceback.print_exc())
+					print("SOCKET ERR to server/node", nodeid)
+					manager_proxy_nodes_status[nodeid]=0
+					print("4 except")
+					print(manager_proxy_nodes_status)
+					# list_of_nodes_running.remove(nodeid)
+					sock_aggr_server.close()
+					sock_node.close()
+					logger.warning("SOCKET ERR to server/node " + str(nodeid))
+					tmp_mote_lock.release()
+					break
+			else:
+				break
+
+		print("closing socket to server and node", nodeid)
+		logger.warning("CLOSING SOCKET to server/node " + str(nodeid))
+		tmp_mote_lock.release()
+		# sleep(5)
+		# print("5 ERR")
+		manager_proxy_nodes_status[nodeid]=0
+		print(manager_proxy_nodes_status)
+		# if nodeid in list_of_nodes_running:
+		# 	list_of_nodes_running.remove(nodeid)
+		sock_aggr_server.close()
+		sock_node.shutdown(socket.SHUT_RDWR)
+		sock_node.close()
+	else:
+		tmp_mote_lock.release()
 
 
 # with Manager() as manager:

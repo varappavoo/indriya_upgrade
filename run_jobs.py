@@ -47,9 +47,9 @@ class ThreadBurnMote (threading.Thread):
 					logger.warn('got lock on mote ' + self.moteref)
 					# x = tmp_mote_lock.acquire(blocking=True)
 					execute_job(self.result_id, self.motetype, self.moteref, self.scp_command, self.ssh_burn_command, self.elf_file)
-					tmp_mote_lock.release()
-					logger.warn("unlocking " + self.moteref)
-					print ("Exiting " + self.moteref)
+					# tmp_mote_lock.release()
+					# logger.warn("unlocking " + self.moteref)
+					# print ("Exiting " + self.moteref)
 					break
 				else:
 					self.count += 1 
@@ -69,7 +69,7 @@ class ThreadBurnMote (threading.Thread):
 						burn_results[result_id]['job_config'][motetype][moteref]['error'] = "could not lock mote"
 						break
 			except:
-				tmp_mote_lock.release()
+				# tmp_mote_lock.release()
 				logger.warn("exception occurred, unlocking " + self.moteref)
 				traceback.print_stack()
 				global burn_results
@@ -79,6 +79,10 @@ class ThreadBurnMote (threading.Thread):
 				burn_results[result_id]['job_config'][motetype][moteref]['cluster_rsync'] = "0"
 				burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"
 				burn_results[result_id]['job_config'][motetype][moteref]['error'] = "could not lock mote"
+
+			finally:
+				tmp_mote_lock.release()
+				logger.warn("unlocking " + self.moteref)
 
 
 

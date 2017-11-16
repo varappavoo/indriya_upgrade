@@ -23,7 +23,7 @@ logging.config.fileConfig('logging.conf')
 
 # create logger
 logger = logging.getLogger('get_data')
-
+SOCKET_TIMEOUT = 30
 
 
 # dbhost = "192.168.1.103"
@@ -148,7 +148,7 @@ def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 		sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
 		# sock_node.connect((json_nodes_virt_id_phy_id[nodeid]['gateway'],json_nodes_virt_id_phy_id[nodeid]['port']))
 		sock_node.connect((gateway, port))
-
+		
 
 		sock_aggr_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		sock_aggr_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -160,6 +160,8 @@ def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 		last_dangling_chunk = ""
 
 		count=0
+
+		sock_node.settimeout(SOCKET_TIMEOUT)
 		while True:
 			if(manager_proxy_nodes_status[nodeid]):
 
@@ -167,6 +169,7 @@ def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 
 				# print("connecting to node", nodeid)
 				try:
+
 					data_received = sock_node.recv(4096)
 					if not data_received: break
 					# data_received = data_received
@@ -192,6 +195,9 @@ def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 						last_dangling_chunk = data_received_split[-1]
 					else:
 						last_dangling_chunk = last_dangling_chunk + data_received
+				except socket.timeout:
+					logger.warning("socket timeout for node " + str(nodeid))
+					# pass
 				except:
 					print(traceback.print_exc())
 					print("SOCKET ERR to server/node", nodeid)
@@ -199,10 +205,10 @@ def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 					print("4 except")
 					print(manager_proxy_nodes_status)
 					# list_of_nodes_running.remove(nodeid)
-					sock_aggr_server.close()
-					sock_node.close()
+					# sock_aggr_server.close()
+					# sock_node.close()
 					logger.warning("SOCKET ERR to server/node " + str(nodeid))
-					tmp_mote_lock.release()
+					# tmp_mote_lock.release()
 					break
 			else:
 				break

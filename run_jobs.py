@@ -69,6 +69,8 @@ class ThreadBurnMote (threading.Thread):
 						burn_results[result_id]['job_config'][motetype][moteref]['error'] = "could not lock mote"
 						break
 			except:
+				tmp_mote_lock.release()
+				logger.warn("exception occurred, unlocking " + self.moteref)
 				traceback.print_stack()
 				global burn_results
 				if burn_results[result_id]['job_config'].get(motetype) == None:

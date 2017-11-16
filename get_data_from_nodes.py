@@ -135,7 +135,7 @@ def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 		if x:
 			break
 		else:
-			logger.warn('waiting to get lock on mote ' + self.moteref)
+			logger.warn('waiting to get lock on mote ' + nodeid)
 			sleep(1)
 			if not (manager_proxy_nodes_status[nodeid]):
 				break

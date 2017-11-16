@@ -44,16 +44,18 @@ class ThreadBurnMote (threading.Thread):
 			x = tmp_mote_lock.acquire(blocking=False)
 			try:
 				if x:
-					logger.warn('got lock on mote ' + self.moteref)
+					logger.warn(self.result_id + ' got lock on mote ' + self.moteref)
 					# x = tmp_mote_lock.acquire(blocking=True)
 					execute_job(self.result_id, self.motetype, self.moteref, self.scp_command, self.ssh_burn_command, self.elf_file)
-					# tmp_mote_lock.release()
-					# logger.warn("unlocking " + self.moteref)
+
+					tmp_mote_lock.release()
+					x=False
+					logger.warn("unlocking " + self.moteref)
 					# print ("Exiting " + self.moteref)
 					break
 				else:
 					self.count += 1 
-					logger.warn('not getting lock on mote ' + self.moteref + ', try ' + str(self.count))
+					logger.warn(self.result_id + ' not getting lock on mote ' + self.moteref + ', try ' + str(self.count))
 					if self.count < MAX_TIME_TO_WAIT_FOR_LOCK_ON_MOTE:
 						sleep(1)
 					else:
@@ -81,8 +83,9 @@ class ThreadBurnMote (threading.Thread):
 				burn_results[result_id]['job_config'][motetype][moteref]['error'] = "could not lock mote"
 
 			finally:
-				tmp_mote_lock.release()
-				logger.warn("unlocking " + self.moteref)
+				if x:
+					tmp_mote_lock.release()
+					logger.warn(self.result_id + " unlocking " + self.moteref)
 
 
 

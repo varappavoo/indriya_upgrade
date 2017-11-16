@@ -4,6 +4,7 @@ import paho.mqtt.client as paho
 from multiprocessing import Process
 import socket
 import json
+from secrets import *
 
 # from active_jobs import *
 
@@ -74,7 +75,8 @@ def accept_rt_input(active_users):
 	logger.info("starting real time input from users")
 	client= paho.Client("client-indriya") 
 	client.on_message=on_message
-	client.username_pw_set("indriya", password="indriya123")
+	#client.username_pw_set("indriya", password="indriya123")
+	client.username_pw_set(mqtt_user, password=mqtt_password)
 	print("connecting to broker ",broker)
 	client.connect(broker)
 	client.loop_start() 

@@ -142,6 +142,8 @@ def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 
 
 	if (manager_proxy_nodes_status[nodeid]):
+		clear_pipeline = True
+
 		logger.info("ATTEMPTING TO CREATE SOCKET to server/node " + str(nodeid) +  "@" + gateway +":"+ str(port))
 		sock_node = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -170,31 +172,36 @@ def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 				# print("connecting to node", nodeid)
 				try:
 
-					data_received = sock_node.recv(4096)
-					if not data_received: break
-					# data_received = data_received
-					data_received = data_received.decode('utf-8','ignore')
-					if('\n' in data_received):
-						data_received_split = data_received.split('\n')
-						# data_received_split = data_received.split('\n')
-						for i in range(len(data_received_split) - 1): # last chunk is likely to be incomplete
-							json_data ={}#'{"nodeid":' + nodeid', "value": "123456789012345678901234567890123456789012345678901234567890abcdxyz"}'
-							count = count + 1
-							json_data['nodeid'] = nodeid
-							if i == 0: 
-								json_data['value'] = last_dangling_chunk + data_received_split[0]
-							else:
-								json_data['value'] = data_received_split[i]
-		
-							data_string = json.dumps(json_data)
-							print(data_string)
-							# sock_server.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte
-							sock_aggr_server.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte
-							sock_rt_stream_udp.sendto(str.encode(data_string,'utf-8') + str.encode("\n"), ('localhost', UDP_PORT+int(nodeid)))
-							print(UDP_PORT+int(nodeid))
-						last_dangling_chunk = data_received_split[-1]
+					data_received = sock_node.recv(131072)
+					if not clear_pipeline:
+						if not data_received: break
+						# data_received = data_received
+						data_received = data_received.decode('utf-8','ignore')
+						if('\n' in data_received):
+							data_received_split = data_received.split('\n')
+							# data_received_split = data_received.split('\n')
+							for i in range(len(data_received_split) - 1): # last chunk is likely to be incomplete
+								json_data ={}#'{"nodeid":' + nodeid', "value": "123456789012345678901234567890123456789012345678901234567890abcdxyz"}'
+								count = count + 1
+								json_data['nodeid'] = nodeid
+								if i == 0: 
+									json_data['value'] = last_dangling_chunk + data_received_split[0]
+								else:
+									json_data['value'] = data_received_split[i]
+			
+								data_string = json.dumps(json_data)
+								print(data_string)
+								# sock_server.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte
+								sock_aggr_server.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte
+								sock_rt_stream_udp.sendto(str.encode(data_string,'utf-8') + str.encode("\n"), ('localhost', UDP_PORT+int(nodeid)))
+								print(UDP_PORT+int(nodeid))
+							last_dangling_chunk = data_received_split[-1]
+						else:
+							last_dangling_chunk = last_dangling_chunk + data_received
 					else:
-						last_dangling_chunk = last_dangling_chunk + data_received
+						# start = time()
+						logger.warning("CLEARING PIPELINE:" + data_received.decode('utf-8','ignore'))
+						clear_pipeline = False
 				except socket.timeout:
 					logger.warning("socket timeout for node " + str(nodeid))
 					# pass

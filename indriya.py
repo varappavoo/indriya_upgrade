@@ -33,6 +33,9 @@ logger = logging.getLogger('indriya_main')
 
 app = Flask(__name__)
 
+telosb_maintenance_binary_filename = "welcome.sky"
+cc2650_maintenance_binary_filename = "55.elf"
+
 first_run=1
 running_jobs = {}
 running_jobs['active'] = []
@@ -56,6 +59,7 @@ def finish_job(json_data):
 	# logger.info("finishing job with result_id..." + str(json_data['result_id']))
 	# start_new_thread(compile_compress_data_for_job(json_data))
 	start_new_thread(compile_compress_data_for_job,(json_data,))
+	maintenance_after_finishing_job(json_data)
 
 def compile_compress_data_for_job(json_data):
 	global jobs_queue, running_jobs
@@ -122,6 +126,17 @@ def burn_motes(json_data):
 	burn_results = run_jobs.schedule_job(json_data)
 	print(burn_results)
 	return burn_results
+
+def maintenance_after_finishing_job(json_data):
+	logger.info("performing maintenance after finishing job")
+	for job in json_data['job_config']:
+		# print(job)
+		if(job['type'] == 'telosb'):
+			job['binary_file'] = telosb_maintenance_binary_filename
+		if(job['type'] == 'cc2650'):
+			job['binary_file'] = cc2650_maintenance_binary_filename
+	burn_results = burn_motes(json_data)
+	logger.info("maintenance: " + str(burn_results))
 
 def process_job(json_data):
 	# print('process_job(json_data)')

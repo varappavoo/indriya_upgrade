@@ -34,7 +34,7 @@ logger = logging.getLogger('indriya_main')
 app = Flask(__name__)
 
 telosb_maintenance_binary_filename = "welcome.sky"
-cc2650_maintenance_binary_filename = "55.elf"
+cc2650_maintenance_binary_filename = "welcome.elf"
 
 first_run=1
 running_jobs = {}
@@ -129,6 +129,7 @@ def burn_motes(json_data):
 
 def maintenance_after_finishing_job(json_data):
 	logger.info("performing maintenance after finishing job")
+	json_data['result_id'] = 0
 	for job in json_data['job_config']:
 		# print(job)
 		if(job['type'] == 'telosb'):

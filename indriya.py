@@ -15,13 +15,15 @@ import sched
 from _thread import start_new_thread
 from time import time,sleep
 
+from copy import deepcopy
+
 import threading
 active_users_lock = threading.Lock()
 job_queue_lock = threading.Lock()
 running_jobs_lock = threading.Lock()
 
 # import get_data_from_nodes
-GAP_BEFORE_STARTING_NEW_JOB = 5
+GAP_BEFORE_STARTING_NEW_JOB = 15
 GAP_AFTER_DEACTIVATING_MOTES = 2
 JOB_MIN_RUNNING_TIME = 60
 import logging
@@ -59,6 +61,7 @@ def finish_job(json_data):
 	# logger.info("finishing job with result_id..." + str(json_data['result_id']))
 	# start_new_thread(compile_compress_data_for_job(json_data))
 	start_new_thread(compile_compress_data_for_job,(json_data,))
+	sleep(1)
 	maintenance_after_finishing_job(json_data)
 
 def compile_compress_data_for_job(json_data):
@@ -129,14 +132,16 @@ def burn_motes(json_data):
 
 def maintenance_after_finishing_job(json_data):
 	logger.info("performing maintenance after finishing job")
-	json_data['result_id'] = 0
-	for job in json_data['job_config']:
+	json_data_copy = {}
+	json_data_copy = deepcopy(json_data)
+	json_data_copy['result_id'] = json_data['result_id'] + '_maintenance'
+	for job in json_data_copy['job_config']:
 		# print(job)
 		if(job['type'] == 'telosb'):
 			job['binary_file'] = telosb_maintenance_binary_filename
 		if(job['type'] == 'cc2650'):
 			job['binary_file'] = cc2650_maintenance_binary_filename
-	burn_results = burn_motes(json_data)
+	burn_results = burn_motes(json_data_copy)
 	logger.info("maintenance: " + str(burn_results))
 
 def process_job(json_data):

@@ -142,7 +142,7 @@ def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 
 
 	if (manager_proxy_nodes_status[nodeid]):
-		clear_pipeline = True
+		clear_pipeline = False
 
 		logger.info("ATTEMPTING TO CREATE SOCKET to server/node " + str(nodeid) +  "@" + gateway +":"+ str(port))
 		sock_node = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -257,7 +257,7 @@ def cancel_job_from_queue(json_data):
 		# print(jobs_queue[result_id]['json_data']['time']['from'], str(int(now)))
 		# print("--------------------------------------------------------------------------------------")
 
-		if jobs_queue[result_id]['job_schedule_event'] not in scheduler.events and jobs_queue[result_id]['job_finish_event'] in scheduler.events:
+		if jobs_queue[result_id]['job_schedule_event'] not in scheduler.queue and jobs_queue[result_id]['job_finish_event'] in scheduler.queue:
 			try:
 				scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
 				scheduler.enterabs(int(time()), 1, finish_job, (json_data,))
@@ -267,7 +267,7 @@ def cancel_job_from_queue(json_data):
 				# scheduler.enterabs(int(time()) + 5, 1, finish_job, (json_data,))
 
 
-		if jobs_queue[result_id]['job_schedule_event'] in scheduler.events:
+		if jobs_queue[result_id]['job_schedule_event'] in scheduler.queue:
 			try:
 				scheduler.cancel(jobs_queue[result_id]['job_schedule_event'])
 			except ValueError:
@@ -275,7 +275,7 @@ def cancel_job_from_queue(json_data):
 				pass
 				# scheduler.enterabs(int(time()) + 5, 1, finish_job, (json_data,))
 		
-		if jobs_queue[result_id]['job_finish_event'] in scheduler.events:
+		if jobs_queue[result_id]['job_finish_event'] in scheduler.queue:
 			try:
 				scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
 				scheduler.enterabs(int(time()), 1, finish_job, (json_data,))

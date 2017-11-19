@@ -23,7 +23,7 @@ job_queue_lock = threading.Lock()
 running_jobs_lock = threading.Lock()
 
 # import get_data_from_nodes
-GAP_BEFORE_STARTING_NEW_JOB = 15
+GAP_BEFORE_STARTING_NEW_JOB = 30
 GAP_AFTER_DEACTIVATING_MOTES = 2
 JOB_MIN_RUNNING_TIME = 60
 import logging
@@ -57,12 +57,13 @@ def schedule_job(json_data):
 	start_new_thread(process_job,(json_data,))
 	# process_job(json_data)
 
-def finish_job(json_data):
+def finish_job(json_data,maintenance=False):
 	# logger.info("finishing job with result_id..." + str(json_data['result_id']))
 	# start_new_thread(compile_compress_data_for_job(json_data))
 	start_new_thread(compile_compress_data_for_job,(json_data,))
-	sleep(1)
-	maintenance_after_finishing_job(json_data)
+	if not maintenance:
+		sleep(1)
+		maintenance_after_finishing_job(json_data)
 
 def compile_compress_data_for_job(json_data):
 	global jobs_queue, running_jobs
@@ -132,8 +133,9 @@ def burn_motes(json_data):
 
 def maintenance_after_finishing_job(json_data):
 	logger.info("performing maintenance after finishing job")
-	json_data_copy = {}
-	json_data_copy = deepcopy(json_data)
+	#json_data_copy = {}
+	#json_data_copy = deepcopy(json_data)
+	json_data_copy = dict(json_data)
 	json_data_copy['result_id'] = json_data['result_id'] + '_maintenance'
 	for job in json_data_copy['job_config']:
 		# print(job)
@@ -143,6 +145,7 @@ def maintenance_after_finishing_job(json_data):
 			job['binary_file'] = cc2650_maintenance_binary_filename
 	burn_results = burn_motes(json_data_copy)
 	logger.info("maintenance: " + str(burn_results))
+	finish_job(json_data_copy, True)
 
 def process_job(json_data):
 	# print('process_job(json_data)')
@@ -189,15 +192,19 @@ def process_job(json_data):
 	# print('#############################################################################################')
 
 def check_successful_burn(json_data):
+	#global burn_results
 	print("check success",json_data)
 	motes_successfully_burnt = []
 	burn_results =read_burn_log(json_data)
+	print(str(burn_results))
 	for key in burn_results["job_config"].keys():
 		moteids = burn_results["job_config"][key].keys()
 		for moteid in moteids:
 			if(burn_results["job_config"][key][moteid]['burn']=='1'):
 				motes_successfully_burnt.append(moteid)
 				print(moteid)
+	burn_results.pop(json_data['result_id'], None)
+	logger.warn("removing burn results for " + json_data['result_id'] + " from dict burn_results")
 	return motes_successfully_burnt
 
 def add_job_to_job_queue_and_scheduler(json_data):

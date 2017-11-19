@@ -246,8 +246,13 @@ def schedule_job(json_jobs_waiting):
 		#burn_results.pop(result_id, None)
 
 		save_burn_log(json_jobs_waiting, burn_results)
-		logger.info("save burn results_1:" + str(json_jobs_waiting))
-		logger.info("save burn results_2:" + str(burn_results))
+		logger.info("save burn results:" + str(burn_results))
+		#logger.warn("results 1" + str(results))
+		burn_results.pop(result_id, None)
+		#logger.warn("results 2" + str(results))
+		#logger.info("save burn results_2:" + str(burn_results))
+		#logger.info("save burn results_1:" + str(json_jobs_waiting))
+		#logger.info("save burn results_2:" + str(burn_results))
 		tmp_job_lock.release()
 
 		return results

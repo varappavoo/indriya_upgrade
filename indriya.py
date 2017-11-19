@@ -262,6 +262,7 @@ def cancel_job_from_queue(json_data):
 			try:
 				scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
 				scheduler.enterabs(int(time()), 1, finish_job, (json_data_full_tmp,))
+				logger.info("job with result_id " +  result_id + ", to be cancelled, is in running state... trying to cancel...")
 			except ValueError:
 				# job finishing already...
 				pass
@@ -271,6 +272,7 @@ def cancel_job_from_queue(json_data):
 		if jobs_queue[result_id]['job_schedule_event'] in scheduler.queue:
 			try:
 				scheduler.cancel(jobs_queue[result_id]['job_schedule_event'])
+				logger.info("job schedule event, with result_id " +  result_id + ", was cancelled")
 			except ValueError:
 				# job already started...
 				pass
@@ -279,6 +281,7 @@ def cancel_job_from_queue(json_data):
 		if jobs_queue[result_id]['job_finish_event'] in scheduler.queue:
 			try:
 				scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
+				logger.info("job compiling/zipping event, with result_id " +  result_id + ", was cancelled")
 				# scheduler.enterabs(int(time()), 1, finish_job, (json_data_full_tmp,))
 			except ValueError:
 				pass # finishing job already...

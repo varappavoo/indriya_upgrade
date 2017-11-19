@@ -63,7 +63,9 @@ def finish_job(json_data,maintenance=False):
 	start_new_thread(compile_compress_data_for_job,(json_data,))
 	if not maintenance:
 		sleep(1)
+		#start_new_thread(maintenance_after_finishing_job, (json_data,))
 		maintenance_after_finishing_job(json_data)
+		sleep(1)
 
 def compile_compress_data_for_job(json_data):
 	global jobs_queue, running_jobs
@@ -200,9 +202,11 @@ def check_successful_burn(json_data):
 	for key in burn_results["job_config"].keys():
 		moteids = burn_results["job_config"][key].keys()
 		for moteid in moteids:
-			if(burn_results["job_config"][key][moteid]['burn']=='1'):
+			if(burn_results["job_config"][key][moteid].get('burn') == '1'):
 				motes_successfully_burnt.append(moteid)
 				print(moteid)
+			else:
+				logger.warn("check burn results " + json_data["result_id"]  + ": checking before burn results are available")
 	burn_results.pop(json_data['result_id'], None)
 	logger.warn("removing burn results for " + json_data['result_id'] + " from dict burn_results")
 	return motes_successfully_burnt
@@ -238,24 +242,33 @@ def cancel_job_from_queue(json_data):
 	print("before cancel job",scheduler.queue)
 	#lock
 	result_id = json_data['result_id']
-	job_queue_lock.acquire()
+	
+	tmp_job_lock = fasteners.InterProcessLock('/tmp/tmp_job_lock_' + result_id)
+	tmp_job_lock.acquire(blocking=True)
+	# use blocking false with sleep!!!
+
+	#job_queue_lock.acquire()
 	if(jobs_queue.get(result_id) != None):
-		now = time()
+		#job_queue_lock.release() # finish_job also needs that lock
+		#now = time()
 		job_time_from = int(jobs_queue[result_id]['json_data']['time']['from'])
 		job_time_to = int(jobs_queue[result_id]['json_data']['time']['to'])
 		# print("--------------------------------------------------------------------------------------")
 		# print(jobs_queue[result_id]['json_data']['time']['from'], str(int(now)))
 		# print("--------------------------------------------------------------------------------------")
-		if(job_time_from > int(now)):
+		if(job_time_from + GAP_BEFORE_STARTING_NEW_JOB > int(time())):
 			scheduler.cancel(jobs_queue[result_id]['job_schedule_event'])
 			logger.info("job schedule event, with result_id " +  result_id + ", was cancelled")
-		if(job_time_to > int(now) - GAP_BEFORE_STARTING_NEW_JOB):
+		if(job_time_to > int(time()) - GAP_BEFORE_STARTING_NEW_JOB):
 			scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
 			logger.info("job compiling/zipping event, with result_id " +  result_id + ", was cancelled")
 		# print("after cancel job",scheduler.queue)
 
-		if(job_time_from < now < job_time_to):
-			finish_job(jobs_queue[result_id]['json_data'])
+		if(job_time_from + GAP_BEFORE_STARTING_NEW_JOB < int(time()) < job_time_to - GAP_BEFORE_STARTING_NEW_JOB):
+			logger.info("job with result_id " +  result_id + ", to be cancelled, is in running state")
+			finish_job(jobs_queue[result_id]['json_data']) #use job_queue_lock as well!!!!
+			#maintenance_after_finishing_job(jobs_queue[result_id]['json_data'])
+			#maintenance_after_finishing_job(json_data_tmp)			
 			'''
 			mote_list = []
 			for i in range(len(jobs_queue[result_id]['json_data']['job_config'])):
@@ -266,19 +279,24 @@ def cancel_job_from_queue(json_data):
 				running_jobs_lock.acquire()
 				running_jobs['active'].remove(result_id)
 				running_jobs_lock.release()
-			'''
-		logger.info("Job, with result_id " +  result_id + ", is being cancelled")
 
-		jobs_queue.pop(result_id,None)
-		job_queue_lock.release()
+			maintenance_after_finishing_job(jobs_queue[result_id]['json_data'])
+			'''
+
+		logger.info("Job, with result_id " +  result_id + ", is being cancelled")
+		#json_data_tmp = dict(jobs_queue[result_id]['json_data'])		
+		#jobs_queue.pop(result_id,None)
+		#job_queue_lock.release()
+		#maintenance_after_finishing_job(json_data_tmp)
+
 		print("SCHEDULER QUEUE:",scheduler.queue)
 		return "1"
 	else:
 		logger.warn("trying to cancel job, with result_id " +  result_id + ", that does not exist")
-		job_queue_lock.release()
+		#job_queue_lock.release()
 		print("SCHEDULER QUEUE:",scheduler.queue)
 		return "0"
-	
+	tmp_job_lock.release() 
 
 @app.route("/cancel_job", methods=['POST'])
 def cancel_job():

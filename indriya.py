@@ -256,32 +256,65 @@ def cancel_job_from_queue(json_data):
 		# print("--------------------------------------------------------------------------------------")
 		# print(jobs_queue[result_id]['json_data']['time']['from'], str(int(now)))
 		# print("--------------------------------------------------------------------------------------")
-		if(job_time_from + GAP_BEFORE_STARTING_NEW_JOB > int(time())):
-			scheduler.cancel(jobs_queue[result_id]['job_schedule_event'])
-			logger.info("job schedule event, with result_id " +  result_id + ", was cancelled")
-		if(job_time_to > int(time()) - GAP_BEFORE_STARTING_NEW_JOB):
-			scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
-			logger.info("job compiling/zipping event, with result_id " +  result_id + ", was cancelled")
-		# print("after cancel job",scheduler.queue)
 
-		if(job_time_from + GAP_BEFORE_STARTING_NEW_JOB < int(time()) < job_time_to - GAP_BEFORE_STARTING_NEW_JOB):
-			logger.info("job with result_id " +  result_id + ", to be cancelled, is in running state")
-			finish_job(jobs_queue[result_id]['json_data']) #use job_queue_lock as well!!!!
-			#maintenance_after_finishing_job(jobs_queue[result_id]['json_data'])
-			#maintenance_after_finishing_job(json_data_tmp)			
-			'''
-			mote_list = []
-			for i in range(len(jobs_queue[result_id]['json_data']['job_config'])):
-				 mote_list = mote_list + jobs_queue[result_id]['json_data']['job_config'][i]['mote_list']
-			deactive_motes(mote_list)
+		if jobs_queue[result_id]['job_schedule_event'] not in scheduler.events and jobs_queue[result_id]['job_finish_event'] in scheduler.events:
+			try:
+				scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
+				scheduler.enterabs(int(time()), 1, finish_job, (json_data,))
+			except ValueError:
+				# job finishing already...
+				pass
+				# scheduler.enterabs(int(time()) + 5, 1, finish_job, (json_data,))
+
+
+		if jobs_queue[result_id]['job_schedule_event'] in scheduler.events:
+			try:
+				scheduler.cancel(jobs_queue[result_id]['job_schedule_event'])
+			except ValueError:
+				# job already started...
+				pass
+				# scheduler.enterabs(int(time()) + 5, 1, finish_job, (json_data,))
+		
+		if jobs_queue[result_id]['job_finish_event'] in scheduler.events:
+			try:
+				scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
+				scheduler.enterabs(int(time()), 1, finish_job, (json_data,))
+			except ValueError:
+				pass # finishing job already...
+				# job already started...
+				# scheduler.enterabs(int(time()) + 5, 1, finish_job, (json_data,))
+
+
+
+
+
+
+		# if(job_time_from + GAP_BEFORE_STARTING_NEW_JOB > int(time())):
+		# 	scheduler.cancel(jobs_queue[result_id]['job_schedule_event'])
+		# 	logger.info("job schedule event, with result_id " +  result_id + ", was cancelled")
+		# if(job_time_to > int(time()) - GAP_BEFORE_STARTING_NEW_JOB):
+		# 	scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
+		# 	logger.info("job compiling/zipping event, with result_id " +  result_id + ", was cancelled")
+		# # print("after cancel job",scheduler.queue)
+
+		# if(job_time_from + GAP_BEFORE_STARTING_NEW_JOB < int(time()) < job_time_to - GAP_BEFORE_STARTING_NEW_JOB):
+		# 	logger.info("job with result_id " +  result_id + ", to be cancelled, is in running state")
+		# 	finish_job(jobs_queue[result_id]['json_data']) #use job_queue_lock as well!!!!
+		# 	#maintenance_after_finishing_job(jobs_queue[result_id]['json_data'])
+		# 	#maintenance_after_finishing_job(json_data_tmp)			
+		# 	'''
+		# 	mote_list = []
+		# 	for i in range(len(jobs_queue[result_id]['json_data']['job_config'])):
+		# 		 mote_list = mote_list + jobs_queue[result_id]['json_data']['job_config'][i]['mote_list']
+		# 	deactive_motes(mote_list)
 			
-			if(result_id in running_jobs['active']):
-				running_jobs_lock.acquire()
-				running_jobs['active'].remove(result_id)
-				running_jobs_lock.release()
+		# 	if(result_id in running_jobs['active']):
+		# 		running_jobs_lock.acquire()
+		# 		running_jobs['active'].remove(result_id)
+		# 		running_jobs_lock.release()
 
-			maintenance_after_finishing_job(jobs_queue[result_id]['json_data'])
-			'''
+		# 	maintenance_after_finishing_job(jobs_queue[result_id]['json_data'])
+		# 	'''
 
 		logger.info("Job, with result_id " +  result_id + ", is being cancelled")
 		#json_data_tmp = dict(jobs_queue[result_id]['json_data'])		

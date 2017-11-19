@@ -255,6 +255,8 @@ def cancel_job_from_queue(json_data):
 		# print("after cancel job",scheduler.queue)
 
 		if(job_time_from < now < job_time_to):
+			finish_job(jobs_queue[result_id]['json_data'])
+			'''
 			mote_list = []
 			for i in range(len(jobs_queue[result_id]['json_data']['job_config'])):
 				 mote_list = mote_list + jobs_queue[result_id]['json_data']['job_config'][i]['mote_list']
@@ -264,8 +266,8 @@ def cancel_job_from_queue(json_data):
 				running_jobs_lock.acquire()
 				running_jobs['active'].remove(result_id)
 				running_jobs_lock.release()
-		
-		logger.info("Job, with result_id " +  result_id + ", is cancelled")
+			'''
+		logger.info("Job, with result_id " +  result_id + ", is being cancelled")
 
 		jobs_queue.pop(result_id,None)
 		job_queue_lock.release()

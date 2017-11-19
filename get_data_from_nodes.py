@@ -23,7 +23,7 @@ logging.config.fileConfig('logging.conf')
 
 # create logger
 logger = logging.getLogger('get_data')
-SOCKET_TIMEOUT = 30
+SOCKET_TIMEOUT = 20
 
 
 # dbhost = "192.168.1.103"

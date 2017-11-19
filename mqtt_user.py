@@ -32,7 +32,7 @@ def generate_password():
 	return password
 
 def send_email(user,password):
-	email_command = 'sendEmail -f indriyaplus@gmail.com -t ' + user + ' -u "indriya++ mqtt credential"  -m "username: ' + user + '\npassword: ' + password + '\n\nYou may\n(1) subscribe using:\nmosquitto_sub -h ocean.comp.nus.edu.sg -t \'#\' -u username -P password\n\n,and (2) publish using:\nmosquitto_pub -h ocean.comp.nus.edu.sg -t \'username/push/nodeid\' -m \'data that the node pulls goes here\' -u username -P password\n\nfor secure mqtt, use: -p 8884 --cafile m2mqtt_ca.crt\n or -p 8883 if you have a client certificate\n\n\nReal Time Data for Real Time Decisions :)" -s smtp.gmail.com:587 -o tls=yes -xu indriyaplus@gmail.com -xp indriyaplusplus -cc "pappavoo@comp.nus.edu.sg" -a m2mqtt_ca.crt'
+	email_command = 'sendEmail -f indriyaplus@gmail.com -t ' + user + ' -u "indriya++ mqtt credential"  -m "Hello,\nYour MQTT account will be activated in less than 30mins. Your credentials are:\nusername: ' + user + '\npassword: ' + password + '\n\nYou may\n(1) subscribe using:\nmosquitto_sub -h ocean.comp.nus.edu.sg -t \'#\' -u username -P password\n\n,and (2) publish using:\nmosquitto_pub -h ocean.comp.nus.edu.sg -t \'username/push/nodeid\' -m \'data that the node pulls goes here\' -u username -P password\n\nfor secure mqtt, use: -p 8884 --cafile m2mqtt_ca.crt\n or -p 8883 if you have a client certificate\n\n\nReal Time Data for Real Time Decisions :)" -s smtp.gmail.com:587 -o tls=yes -xu indriyaplus@gmail.com -xp indriyaplusplus -cc "pappavoo@comp.nus.edu.sg" -a m2mqtt_ca.crt'
 	print(email_command)
 	email_sent = run_cmd(email_command,"successfully!")
 	if not email_sent:

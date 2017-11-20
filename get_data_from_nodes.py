@@ -190,11 +190,11 @@ def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 									json_data['value'] = data_received_split[i]
 			
 								data_string = json.dumps(json_data)
-								print(data_string)
+								# print(data_string)
 								# sock_server.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte
 								sock_aggr_server.send(str.encode(data_string,'utf-8') + str.encode("\n")) # encode to from str to byte
-								sock_rt_stream_udp.sendto(str.encode(data_string,'utf-8') + str.encode("\n"), ('localhost', UDP_PORT+int(nodeid)))
-								print(UDP_PORT+int(nodeid))
+								# sock_rt_stream_udp.sendto(str.encode(data_string,'utf-8') + str.encode("\n"), ('localhost', UDP_PORT+int(nodeid)))
+								# print(UDP_PORT+int(nodeid))
 							last_dangling_chunk = data_received_split[-1]
 						else:
 							last_dangling_chunk = last_dangling_chunk + data_received

@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 # from flask import Flask
+from termcolor import colored
+
 from flask import Flask, request
 import json
 import run_jobs
@@ -11,6 +13,8 @@ import fasteners
 from mqtt_user import *
 from run_config import *
 
+from filelock import FileLock
+
 import sched
 from _thread import start_new_thread
 from time import time,sleep
@@ -21,6 +25,8 @@ import threading
 active_users_lock = threading.Lock()
 job_queue_lock = threading.Lock()
 running_jobs_lock = threading.Lock()
+
+cancel_jobs_lock = threading.Lock()
 
 # import get_data_from_nodes
 GAP_BEFORE_STARTING_NEW_JOB = 30
@@ -43,11 +49,16 @@ running_jobs = {}
 running_jobs['active'] = []
 
 def check_scheduler():
-	# global scheduler
+	global scheduler
 	while(True):
-		# print("check_scheduler",scheduler.queue)
-		if(len(scheduler.queue) > 0):
+		print("check_scheduler")#,scheduler.queue)
+		for event in scheduler.queue:
+			print(event[0], (event[3][0])['result_id'] , (event[3][0])['job_config'][0]['mote_list'], event[2],)
+		# if(len(scheduler.queue) > 0):
+		try:
 			scheduler.run(blocking=False)
+		except:
+			print("check_scheduler exception")
 		sleep(1)
 
 
@@ -150,48 +161,63 @@ def maintenance_after_finishing_job(json_data):
 	finish_job(json_data_copy, True)
 
 def process_job(json_data):
-	# print('process_job(json_data)')
-	global running_jobs
+
+	global scheduler
 	result_id = json_data['result_id']
-	logger.info("processing job submitted by " + str(json_data['user']) + " result_id " + str(result_id))
-	# sleep(GAP_BEFORE_STARTING_NEW_JOB)
-	mote_list = []
-	for i in range(len(json_data['job_config'])):
-		 mote_list = mote_list + json_data['job_config'][i]['mote_list']
-	deactive_motes(mote_list)
 
-	burn_process = Process(target=burn_motes,args=([json_data]))
-	burn_process.start()
-	#burn_process.join()
-	sleep(0.1)
-	# burn_results = burn_motes(json_data)
-	# logger.info(result_id + " " +str(burn_results))
-	# save_burn_log(json_data, burn_results)
-	tmp_job_lock = fasteners.InterProcessLock('/tmp/tmp_job_lock_' + result_id)
-	#while(1):
-	#	x=
-	tmp_job_lock.acquire(blocking=True)
-	#	if(x): break
-	#	print("waiting for job",result_id,"to be processed!")
-	#	sleep(1)
-	tmp_job_lock.release() # just make sure that the burning is done :)
+	with FileLock("/tmp/" + result_id):
 
-	mote_list_burnt = check_successful_burn(json_data)
-	if(len(mote_list_burnt) > 0):
-		logger.warn(str(len(mote_list_burnt)) + '/' + str(len(mote_list)) + ' motes are succussfully burn for job ' + result_id)
-		update_active_users(json_data['user'],mote_list_burnt)
-		running_jobs_lock.acquire()
-		# logger.info("running_jobs B" + str(running_jobs) + " " + result_id)
-		running_jobs['active'] = running_jobs['active'] + [result_id]
-		# logger.info("running_jobs A" + str(running_jobs))
-		running_jobs_lock.release()
-	else:
-		logger.warn('job ' + result_id + ' is cancelled as all motes are unsuccessful burnt')
-		scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
-		compile_compress_data_for_job(json_data)
+		# process_job_lock = fasteners.InterProcessLock('/tmp/process_job_lock_' + result_id)
+		# process_job_lock.acquire(blocking=True)
+
+		global running_jobs
+
+		logger.info("processing job submitted by " + str(json_data['user']) + " result_id " + str(result_id))
+		# sleep(GAP_BEFORE_STARTING_NEW_JOB)
+		mote_list = []
+		for i in range(len(json_data['job_config'])):
+			 mote_list = mote_list + json_data['job_config'][i]['mote_list']
+		deactive_motes(mote_list)
+
+		burn_process = Process(target=burn_motes,args=([json_data]))
+		burn_process.start()
+		#burn_process.join()
+		sleep(0.1)
+		# burn_results = burn_motes(json_data)
+		# logger.info(result_id + " " +str(burn_results))
+		# save_burn_log(json_data, burn_results)
+		tmp_job_lock = fasteners.InterProcessLock('/tmp/tmp_job_lock_' + result_id)
+		#while(1):
+		#	x=
+		tmp_job_lock.acquire(blocking=True)
+		#	if(x): break
+		#	print("waiting for job",result_id,"to be processed!")
+		#	sleep(1)
+		tmp_job_lock.release() # just make sure that the burning is done :)
 
 
-	# print('#############################################################################################')
+		##################################################################
+		##################################################################
+		######## CHECK ALSO IF JOB IS NOT CANCELLED BY NOW ###############
+		##################################################################
+		##################################################################
+		mote_list_burnt = check_successful_burn(json_data)
+		if(len(mote_list_burnt) > 0):# and job_is_not_cancelled_by_now):
+			logger.warn(str(len(mote_list_burnt)) + '/' + str(len(mote_list)) + ' motes are succussfully burn for job ' + result_id)
+			update_active_users(json_data['user'],mote_list_burnt)
+			running_jobs_lock.acquire()
+			# logger.info("running_jobs B" + str(running_jobs) + " " + result_id)
+			running_jobs['active'] = running_jobs['active'] + [result_id]
+			# logger.info("running_jobs A" + str(running_jobs))
+			running_jobs_lock.release()
+		else:
+			logger.warn('job ' + result_id + ' is cancelled as all motes are unsuccessful burnt')
+			scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
+			compile_compress_data_for_job(json_data)
+
+		# process_job_lock.release()
+
+		# print('#############################################################################################')
 
 def check_successful_burn(json_data):
 	#global burn_results
@@ -212,9 +238,9 @@ def check_successful_burn(json_data):
 	return motes_successfully_burnt
 
 def add_job_to_job_queue_and_scheduler(json_data):
-	global first_run, jobs_queue
+	global first_run, jobs_queue, scheduler
 	if(first_run):
-		start_new_thread(check_scheduler,())
+		# start_new_thread(check_scheduler,())
 		first_run = 0
 	try:
 		job_queue_lock.acquire()
@@ -238,105 +264,145 @@ def add_job_to_job_queue_and_scheduler(json_data):
 
 
 def cancel_job_from_queue(json_data):
-	global jobs_queue, running_jobs
-	print("before cancel job",scheduler.queue)
-	#lock
+	global scheduler
 	result_id = json_data['result_id']
-	
-	tmp_job_lock = fasteners.InterProcessLock('/tmp/tmp_job_lock_' + result_id)
-	tmp_job_lock.acquire(blocking=True)
-	# use blocking false with sleep!!!
 
-	#job_queue_lock.acquire()
-	if(jobs_queue.get(result_id) != None):
-		#job_queue_lock.release() # finish_job also needs that lock
-		#now = time()
-		job_time_from = int(jobs_queue[result_id]['json_data']['time']['from'])
-		job_time_to = int(jobs_queue[result_id]['json_data']['time']['to'])
-		json_data_full_tmp = dict(jobs_queue[result_id]['json_data'])
-		# print("--------------------------------------------------------------------------------------")
-		# print(jobs_queue[result_id]['json_data']['time']['from'], str(int(now)))
-		# print("--------------------------------------------------------------------------------------")
+	# process_job_lock = fasteners.InterProcessLock('/tmp/process_job_lock_' + result_id)
+	# process_job_lock.acquire(blocking=True)
 
-		if jobs_queue[result_id]['job_schedule_event'] not in scheduler.queue and jobs_queue[result_id]['job_finish_event'] in scheduler.queue:
-			try:
-				scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
-				scheduler.enterabs(int(time()), 1, finish_job, (json_data_full_tmp,))
-				logger.info("job with result_id " +  result_id + ", to be cancelled, is in running state... trying to cancel...")
-			except ValueError:
-				# job finishing already...
-				pass
-				# scheduler.enterabs(int(time()) + 5, 1, finish_job, (json_data,))
+	with FileLock("/tmp/" + result_id):
 
-
-		if jobs_queue[result_id]['job_schedule_event'] in scheduler.queue:
-			try:
-				scheduler.cancel(jobs_queue[result_id]['job_schedule_event'])
-				logger.info("job schedule event, with result_id " +  result_id + ", was cancelled")
-			except ValueError:
-				# job already started...
-				pass
-				# scheduler.enterabs(int(time()) + 5, 1, finish_job, (json_data,))
+		global jobs_queue, running_jobs
+		print("before cancel job with id", result_id ,scheduler.queue)
+		logger.info("before cancel job with id " + result_id  + str(scheduler.queue))
+		#lock
 		
-		if jobs_queue[result_id]['job_finish_event'] in scheduler.queue:
-			try:
-				scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
-				logger.info("job compiling/zipping event, with result_id " +  result_id + ", was cancelled")
-				# scheduler.enterabs(int(time()), 1, finish_job, (json_data_full_tmp,))
-			except ValueError:
-				pass # finishing job already...
-				# job already started...
-				# scheduler.enterabs(int(time()) + 5, 1, finish_job, (json_data,))
+		result = "0"
 
 
+		# tmp_job_lock = fasteners.InterProcessLock('/tmp/tmp_job_lock_' + result_id)
+		# tmp_job_lock.acquire(blocking=True)
+		# use blocking false with sleep!!!
+
+		job_queue_lock.acquire()
+		if(jobs_queue.get(result_id) != None):
+			#job_queue_lock.release() # finish_job also needs that lock
+			#now = time()
+			job_time_from = int(jobs_queue[result_id]['json_data']['time']['from'])
+			job_time_to = int(jobs_queue[result_id]['json_data']['time']['to'])
+			json_data_full_tmp = dict(jobs_queue[result_id]['json_data'])
+
+			# print("--------------------------------------------------------------------------------------")
+			# print(jobs_queue[result_id]['json_data']['time']['from'], str(int(now)))
+			# print("--------------------------------------------------------------------------------------")
+			logger.warn("schedule event" + str(jobs_queue[result_id]['job_schedule_event']))
+			logger.warn("finish event" + str(jobs_queue[result_id]['job_finish_event']))
+			pop_job = True 
+			if jobs_queue[result_id]['job_schedule_event'] not in scheduler.queue and jobs_queue[result_id]['job_finish_event'] in scheduler.queue:
+				try:
+					scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
+					# mote_list = []
+					# for i in range(len(jobs_queue[result_id]['json_data']['job_config'])):
+					# 	 mote_list = mote_list + jobs_queue[result_id]['json_data']['job_config'][i]['mote_list']
+					# deactive_motes(mote_list)
+					
+					# if(result_id in running_jobs['active']):
+					# 	running_jobs_lock.acquire()
+					# 	running_jobs['active'].remove(result_id)
+					# 	running_jobs_lock.release()
+
+					scheduler.enterabs(int(time()), 1, finish_job, (json_data_full_tmp,))
+					pop_job = False
+					logger.info("job with result_id " +  result_id + ", to be cancelled, is in running state... trying to cancel...")
+
+				except:
+					logging.error("1. ---------------------------------")
+					print(traceback.print_exc())
+					# job finishing already...
+					pass
+					# scheduler.enterabs(int(time()) + 5, 1, finish_job, (json_data,))
 
 
-
-
-		# if(job_time_from + GAP_BEFORE_STARTING_NEW_JOB > int(time())):
-		# 	scheduler.cancel(jobs_queue[result_id]['job_schedule_event'])
-		# 	logger.info("job schedule event, with result_id " +  result_id + ", was cancelled")
-		# if(job_time_to > int(time()) - GAP_BEFORE_STARTING_NEW_JOB):
-		# 	scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
-		# 	logger.info("job compiling/zipping event, with result_id " +  result_id + ", was cancelled")
-		# # print("after cancel job",scheduler.queue)
-
-		# if(job_time_from + GAP_BEFORE_STARTING_NEW_JOB < int(time()) < job_time_to - GAP_BEFORE_STARTING_NEW_JOB):
-		# 	logger.info("job with result_id " +  result_id + ", to be cancelled, is in running state")
-		# 	finish_job(jobs_queue[result_id]['json_data']) #use job_queue_lock as well!!!!
-		# 	#maintenance_after_finishing_job(jobs_queue[result_id]['json_data'])
-		# 	#maintenance_after_finishing_job(json_data_tmp)			
-		# 	'''
-		# 	mote_list = []
-		# 	for i in range(len(jobs_queue[result_id]['json_data']['job_config'])):
-		# 		 mote_list = mote_list + jobs_queue[result_id]['json_data']['job_config'][i]['mote_list']
-		# 	deactive_motes(mote_list)
+			if jobs_queue[result_id]['job_schedule_event'] in scheduler.queue:
+				try:
+					scheduler.cancel(jobs_queue[result_id]['job_schedule_event'])
+					logger.info("job schedule event, with result_id " +  result_id + ", was cancelled")
+				# except ValueError:
+				except:
+					logging.error("2. ---------------------------------")
+					print(traceback.print_exc())
+					# job already started...
+					pass
+					# scheduler.enterabs(int(time()) + 5, 1, finish_job, (json_data,))
 			
-		# 	if(result_id in running_jobs['active']):
-		# 		running_jobs_lock.acquire()
-		# 		running_jobs['active'].remove(result_id)
-		# 		running_jobs_lock.release()
+			if jobs_queue[result_id]['job_finish_event'] in scheduler.queue:
+				try:
+					scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
+					logger.info("job compiling/zipping event, with result_id " +  result_id + ", was cancelled")
+					# scheduler.enterabs(int(time()), 1, finish_job, (json_data_full_tmp,))
+				# except ValueError:
+				except:
+					logging.error("3. ---------------------------------")
+					print(traceback.print_exc())
+					pass # finishing job already...
+					# job already started...
+					# scheduler.enterabs(int(time()) + 5, 1, finish_job, (json_data,))
 
-		# 	maintenance_after_finishing_job(jobs_queue[result_id]['json_data'])
-		# 	'''
+			if pop_job:
+				jobs_queue.pop(result_id,None)
 
-		logger.info("Job, with result_id " +  result_id + ", is being cancelled")
-		#json_data_tmp = dict(jobs_queue[result_id]['json_data'])		
-		#jobs_queue.pop(result_id,None)
-		#job_queue_lock.release()
-		#maintenance_after_finishing_job(json_data_tmp)
+			# if(job_time_from + GAP_BEFORE_STARTING_NEW_JOB > int(time())):
+			# 	scheduler.cancel(jobs_queue[result_id]['job_schedule_event'])
+			# 	logger.info("job schedule event, with result_id " +  result_id + ", was cancelled")
+			# if(job_time_to > int(time()) - GAP_BEFORE_STARTING_NEW_JOB):
+			# 	scheduler.cancel(jobs_queue[result_id]['job_finish_event'])
+			# 	logger.info("job compiling/zipping event, with result_id " +  result_id + ", was cancelled")
+			# # print("after cancel job",scheduler.queue)
 
-		print("SCHEDULER QUEUE:",scheduler.queue)
-		return "1"
-	else:
-		logger.warn("trying to cancel job, with result_id " +  result_id + ", that does not exist")
-		#job_queue_lock.release()
-		print("SCHEDULER QUEUE:",scheduler.queue)
-		return "0"
-	tmp_job_lock.release() 
+			# if(job_time_from + GAP_BEFORE_STARTING_NEW_JOB < int(time()) < job_time_to - GAP_BEFORE_STARTING_NEW_JOB):
+			# 	logger.info("job with result_id " +  result_id + ", to be cancelled, is in running state")
+			# 	finish_job(jobs_queue[result_id]['json_data']) #use job_queue_lock as well!!!!
+			# 	#maintenance_after_finishing_job(jobs_queue[result_id]['json_data'])
+			# 	#maintenance_after_finishing_job(json_data_tmp)			
+			# 	'''
+			# 	mote_list = []
+			# 	for i in range(len(jobs_queue[result_id]['json_data']['job_config'])):
+			# 		 mote_list = mote_list + jobs_queue[result_id]['json_data']['job_config'][i]['mote_list']
+			# 	deactive_motes(mote_list)
+				
+			# 	if(result_id in running_jobs['active']):
+			# 		running_jobs_lock.acquire()
+			# 		running_jobs['active'].remove(result_id)
+			# 		running_jobs_lock.release()
+
+			# 	maintenance_after_finishing_job(jobs_queue[result_id]['json_data'])
+			# 	'''
+
+			logger.info("Job, with result_id " +  result_id + ", is being cancelled")
+			#json_data_tmp = dict(jobs_queue[result_id]['json_data'])		
+			#jobs_queue.pop(result_id,None)
+			job_queue_lock.release()
+			#maintenance_after_finishing_job(json_data_tmp)
+
+			print("SCHEDULER QUEUE:",scheduler.queue)
+			result = "1"
+		else:
+			logger.warn("trying to cancel job, with result_id " +  result_id + ", that does not exist")
+			job_queue_lock.release()
+			print("SCHEDULER QUEUE:",scheduler.queue)
+			# result = "0"
+		
+		# process_job_lock.release()
+
+		print("after cancel job with id", result_id ,scheduler.queue)
+		logger.info("after cancel job with id" + result_id  + str(scheduler.queue))
+		# job_queue_lock.release()
+		# tmp_job_lock.release() 
+	return result
 
 @app.route("/cancel_job", methods=['POST'])
 def cancel_job():
+	print("CANCEL JOB",colored(str(request.json),"red"))
 	json_data = request.json
 	logger.info("REQUEST: job with resultid " + json_data['result_id'] + " is called for cancelation")# + str(json_data['user']) + "@" + str(time()) + " to be running from " + json_data['time']['from'] + " to " + json_data['time']['to'])
 	result = cancel_job_from_queue(json_data)
@@ -345,6 +411,15 @@ def cancel_job():
 	response['action']='cancel_job'
 	response['result']=result
 	return str(response)
+
+# @app.route("/cancel_job", methods=['POST'])
+# def cancel_job():
+# 	json_data = request.json
+# 	response={}
+# 	response['result_id']=json_data['result_id']
+# 	response['action']='cancel_job'
+# 	response['result']="1"
+# 	return str(response)
 
 @app.route("/active_users", methods=['GET','POST'])
 def active_users():
@@ -363,7 +438,12 @@ def get_burn_results():
 
 @app.route("/new_job", methods=['GET','POST'])
 def new_job():
-	print(request)
+	global scheduler_down
+	if scheduler_down:
+		start_new_thread(check_scheduler,())
+		scheduler_down = False
+
+	print("NEW JOB",colored(str(request.json),"green"))
 	json_data = request.json
 	print(json_data)
 	logger.info("REQUEST: new job " + json_data['result_id'] + " submitted by " + str(json_data['user']) + " @ " + str(time()) + ", to run from " + json_data['time']['from'] + " to " + json_data['time']['to'])
@@ -435,6 +515,8 @@ def check_binary():
 if __name__ == '__main__':
 	jobs_queue = {}
 	scheduler = sched.scheduler(time, sleep)
+	# start_new_thread(check_scheduler,())
+	scheduler_down = True
 	
 	###############################################################################################################
 	#### get_data_from_nodes
@@ -464,4 +546,6 @@ if __name__ == '__main__':
 		# scheduler_server.start()
 
 		get_data_from_nodes_server.join()
+
+		# scheduler.run(blocking=True)
 

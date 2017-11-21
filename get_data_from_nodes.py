@@ -131,11 +131,11 @@ def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 	tmp_mote_lock = fasteners.InterProcessLock('/tmp/tmp_mote_lock_' + nodeid)
 	# x = tmp_mote_lock.acquire(blocking=True)
 	while(True):
-		x = tmp_mote_lock.acquire(blocking=False)
-		if x:
+		got_lock = tmp_mote_lock.acquire(blocking=False)
+		if got_lock:
 			break
 		else:
-			logger.warn('waiting to get lock on mote ' + nodeid)
+			logger.warn('get_data_from_nodes waiting to get lock on mote ' + nodeid)
 			sleep(1)
 			if not (manager_proxy_nodes_status[nodeid]):
 				break
@@ -233,7 +233,8 @@ def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 		sock_node.shutdown(socket.SHUT_RDWR)
 		sock_node.close()
 	else:
-		tmp_mote_lock.release()
+		if got_lock:
+			tmp_mote_lock.release()
 
 
 # with Manager() as manager:

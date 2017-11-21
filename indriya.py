@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # from flask import Flask
 from termcolor import colored
+import random
 
 from flask import Flask, request
 import json
@@ -32,6 +33,12 @@ cancel_jobs_lock = threading.Lock()
 GAP_BEFORE_STARTING_NEW_JOB = 30
 GAP_AFTER_DEACTIVATING_MOTES = 2
 JOB_MIN_RUNNING_TIME = 60
+
+GAP_TO_START_CLEANING_WHEN_CANCELLING_DURING_RUNNING = 10
+GAP_TO_START_CLEANING_AFTER_FINISHING_JOB = 5
+PROCESS_JOB_LOCK_TIMEOUT = 60
+PROCESS_JOB_LOCK_POLL_INTERVAL = 1
+
 import logging
 
 logging.config.fileConfig('logging.conf')
@@ -73,10 +80,12 @@ def finish_job(json_data,maintenance=False):
 	# start_new_thread(compile_compress_data_for_job(json_data))
 	start_new_thread(compile_compress_data_for_job,(json_data,))
 	if not maintenance:
-		sleep(1)
-		#start_new_thread(maintenance_after_finishing_job, (json_data,))
-		maintenance_after_finishing_job(json_data)
-		sleep(1)
+		scheduler.enterabs(int(time()) + GAP_TO_START_CLEANING_AFTER_FINISHING_JOB, 1, maintenance_after_finishing_job, (json_data,))
+
+		# sleep(1)
+		# #start_new_thread(maintenance_after_finishing_job, (json_data,))
+		# maintenance_after_finishing_job(json_data)
+		# sleep(1)
 
 def compile_compress_data_for_job(json_data):
 	global jobs_queue, running_jobs
@@ -145,27 +154,55 @@ def burn_motes(json_data):
 	return burn_results
 
 def maintenance_after_finishing_job(json_data):
-	logger.info("performing maintenance after finishing job")
-	#json_data_copy = {}
-	#json_data_copy = deepcopy(json_data)
-	json_data_copy = dict(json_data)
-	json_data_copy['result_id'] = json_data['result_id'] + '_maintenance'
-	for job in json_data_copy['job_config']:
-		# print(job)
-		if(job['type'] == 'telosb'):
-			job['binary_file'] = telosb_maintenance_binary_filename
-		if(job['type'] == 'cc2650'):
-			job['binary_file'] = cc2650_maintenance_binary_filename
-	burn_results = burn_motes(json_data_copy)
-	logger.info("maintenance: " + str(burn_results))
-	finish_job(json_data_copy, True)
+	try:
+		logger.info("performing maintenance after finishing job")
+		#json_data_copy = {}
+		#json_data_copy = deepcopy(json_data)
+		json_data_copy = dict(json_data)
+		
+		result_id = json_data_copy['result_id']
+		
+		json_data_copy['result_id'] = json_data['result_id'] + '_maintenance'
+		for job in json_data_copy['job_config']:
+			# print(job)
+			if(job['type'] == 'telosb'):
+				job['binary_file'] = telosb_maintenance_binary_filename
+			if(job['type'] == 'cc2650'):
+				job['binary_file'] = cc2650_maintenance_binary_filename
+		# burn_results = burn_motes(json_data_copy)
+
+		burn_process = Process(target=burn_motes,args=([json_data_copy]))
+		burn_process.start()
+		#burn_process.join()
+		sleep(0.1)
+		# burn_results = burn_motes(json_data)
+		# logger.info(result_id + " " +str(burn_results))
+		# save_burn_log(json_data, burn_results)
+		tmp_job_lock = fasteners.InterProcessLock('/tmp/tmp_job_lock_' + result_id)
+		#while(1):
+		#	x=
+		tmp_job_lock.acquire(blocking=True)
+		#	if(x): break
+		#	print("waiting for job",result_id,"to be processed!")
+		#	sleep(1)
+		tmp_job_lock.release() # just make sure that the burning is done :)
+
+		# mote_list_burnt = check_successful_burn(json_data_copy)
+
+		logger.info("maintenance done: " + result_id)
+		finish_job(json_data_copy, True)
+	except:
+		print(traceback.print_exc())
 
 def process_job(json_data):
 
 	global scheduler
 	result_id = json_data['result_id']
 
-	with FileLock("/tmp/" + result_id):
+
+	process_job_lock = FileLock("/tmp/" + result_id)
+	with process_job_lock.acquire(timeout = PROCESS_JOB_LOCK_TIMEOUT, poll_intervall=PROCESS_JOB_LOCK_POLL_INTERVAL):
+	# with FileLock("/tmp/" + result_id):
 
 		# process_job_lock = fasteners.InterProcessLock('/tmp/process_job_lock_' + result_id)
 		# process_job_lock.acquire(blocking=True)
@@ -246,8 +283,18 @@ def add_job_to_job_queue_and_scheduler(json_data):
 		job_queue_lock.acquire()
 		jobs_queue[json_data['result_id']]={}
 		jobs_queue[json_data['result_id']]['json_data']=json_data
-		e_start = scheduler.enterabs(int(json_data['time']['from']) + GAP_BEFORE_STARTING_NEW_JOB, 1, schedule_job, (json_data,))
-		e_finish = scheduler.enterabs(int(json_data['time']['to']) - GAP_BEFORE_STARTING_NEW_JOB, 1, finish_job, (json_data,))
+
+		#########################################################################
+		# events are distinguished based on time and not the event tuple ;)
+		#########################################################################
+		rnd = random.random()
+		decimal_place = 10000
+		rnd_a_dp = (round(rnd * decimal_place))/decimal_place
+		logger.info("rnd_a_dp" + str(rnd_a_dp))
+		# e_start = scheduler.enterabs(int(json_data['time']['from']) + GAP_BEFORE_STARTING_NEW_JOB + (round(random() * decimal_place))/decimal_place, 1, schedule_job, (json_data,))
+		# e_finish = scheduler.enterabs(int(json_data['time']['to']) - GAP_BEFORE_STARTING_NEW_JOB + (round(random() * decimal_place))/decimal_place, 1, finish_job, (json_data,))
+		e_start = scheduler.enterabs(int(json_data['time']['from']) + GAP_BEFORE_STARTING_NEW_JOB + rnd_a_dp, 1, schedule_job, (json_data,))
+		e_finish = scheduler.enterabs(int(json_data['time']['to']) - GAP_BEFORE_STARTING_NEW_JOB + rnd_a_dp, 1, finish_job, (json_data,))
 
 		# e_start = scheduler.enter(int(json_data['time']['from']), 1, schedule_job, (json_data,))
 		# e_finish = scheduler.enter(int(json_data['time']['to']), 1, finish_job, (json_data,))
@@ -259,6 +306,7 @@ def add_job_to_job_queue_and_scheduler(json_data):
 		print("SCHEDULER QUEUE:",scheduler.queue)
 		return "1"
 	except:
+		print(traceback.print_exc())
 		print("SCHEDULER QUEUE:",scheduler.queue)
 		return "0"
 
@@ -270,7 +318,8 @@ def cancel_job_from_queue(json_data):
 	# process_job_lock = fasteners.InterProcessLock('/tmp/process_job_lock_' + result_id)
 	# process_job_lock.acquire(blocking=True)
 
-	with FileLock("/tmp/" + result_id):
+	process_job_lock = FileLock("/tmp/" + result_id) # make sure that job is not being processed at the same time... if already started
+	with process_job_lock.acquire(timeout = PROCESS_JOB_LOCK_TIMEOUT, poll_intervall=PROCESS_JOB_LOCK_POLL_INTERVAL):
 
 		global jobs_queue, running_jobs
 		print("before cancel job with id", result_id ,scheduler.queue)
@@ -311,7 +360,7 @@ def cancel_job_from_queue(json_data):
 					# 	running_jobs['active'].remove(result_id)
 					# 	running_jobs_lock.release()
 
-					scheduler.enterabs(int(time()), 1, finish_job, (json_data_full_tmp,))
+					scheduler.enterabs(int(time()) + GAP_TO_START_CLEANING_WHEN_CANCELLING_DURING_RUNNING, 2, finish_job, (json_data_full_tmp,))
 					pop_job = False
 					logger.info("job with result_id " +  result_id + ", to be cancelled, is in running state... trying to cancel...")
 

@@ -80,7 +80,10 @@ def finish_job(json_data,maintenance=False):
 	# start_new_thread(compile_compress_data_for_job(json_data))
 	start_new_thread(compile_compress_data_for_job,(json_data,))
 	if not maintenance:
-		scheduler.enterabs(int(time()) + GAP_TO_START_CLEANING_AFTER_FINISHING_JOB, 1, maintenance_after_finishing_job, (json_data,))
+		rnd = random.random()
+		decimal_place = 10000
+		rnd_a_dp = (round(rnd * decimal_place))/decimal_place
+		scheduler.enterabs(int(time()) + GAP_TO_START_CLEANING_AFTER_FINISHING_JOB + rnd_a_dp, 1, maintenance_after_finishing_job, (json_data,))
 
 		# sleep(1)
 		# #start_new_thread(maintenance_after_finishing_job, (json_data,))

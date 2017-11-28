@@ -143,16 +143,16 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command, elf_f
 					count_burn_tries = count_burn_tries + 1
 					if count_burn_tries > 1:
 						sleep(WAIT_BEFORE_RETRY)
-
-					if(burn_done == "1"):
-						logger.info("SUCCESS:" + command)
-					else:
-						logger.warning("FAILURE:" + command + "\n\n" + output + "\n" + err)
-						
 				burn_results[result_id]['job_config'][motetype][moteref]['burn'] = burn_done
+
+				
+				if(burn_done == "1"):
+					logger.info("SUCCESS:" + command)
+				else:
+					logger.warning("FAILURE:" + command + "\n\n" + output + "\n" + err)
 			else:
 				burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"
-				logger.warning("Not attempting to burn as SCP was unsuccessful: \n" + scp_command)
+				logger.warning("Not attempting to burn as RSYNC was unsuccessful: \n" + scp_command)
 			print(burn_results[result_id])
 		else:
 			logger.info("file check FAILED: " + elf_file + " " + motetype)

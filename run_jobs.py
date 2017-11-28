@@ -96,16 +96,16 @@ def run_cmd(command, success_identifier, success=True):
 	output = output.decode("utf-8")
 	err = err.decode("utf-8")
 	if(success and (output.find(success_identifier) > -1 or err.find(success_identifier) > -1)):
-		print("SUCCESS!!")
-		logger.info("SUCCESS:" + command)
+		# print("SUCCESS!!")
+		# logger.info("SUCCESS:" + command)
 		return True
 	elif(not success and (not(output.find(success_identifier) > -1) or not(err.find(success_identifier) > -1))): # here we have an identifier for failure...
-		print("SUCCESS!!")
-		logger.info("SUCCESS:" + command)
+		# print("SUCCESS!!")
+		# logger.info("SUCCESS:" + command)
 		return True
 	else:
-		print("FAILURE!!")
-		logger.warning("FAILURE:" + command + "\n\n" + output + "\n" + err)
+		# print("FAILURE!!")
+		# logger.warning("FAILURE:" + command + "\n\n" + output + "\n" + err)
 		return False
 
 def check_binary_file(elf_file, motetype):
@@ -139,10 +139,16 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command, elf_f
 					if motetype == 'telosb':
 						burn_done = "1" if(run_cmd(ssh_burn_command, "Programming: OK")) else "0"
 					elif motetype == 'cc2650':
-						burn_done = "1" if(run_cmd(ssh_burn_command, "Failed:", False)) else "0"
+						burn_done = "0" if(run_cmd(ssh_burn_command, "Failed:")) else "1"
 					count_burn_tries = count_burn_tries + 1
 					if count_burn_tries > 1:
 						sleep(WAIT_BEFORE_RETRY)
+
+					if(burn_done == "1"):
+						logger.info("SUCCESS:" + command)
+					else:
+						logger.warning("FAILURE:" + command + "\n\n" + output + "\n" + err)
+						
 				burn_results[result_id]['job_config'][motetype][moteref]['burn'] = burn_done
 			else:
 				burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"

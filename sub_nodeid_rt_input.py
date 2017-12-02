@@ -5,7 +5,7 @@ from multiprocessing import Process
 import socket
 import json
 from secrets import *
-
+import traceback
 # from active_jobs import *
 
 import logging
@@ -48,16 +48,20 @@ def on_message(client, userdata, message):
 	print(active_users_copy)
 	logger.info(str(active_users_copy))
 	print("nodeid:",nodeid,"value:",value)
-	if nodeid in active_users_copy[user]:
-		print("user", user, "booked",nodeid)
-		logger.info("user " + user + " booked " + nodeid + "; sending: " +  value)
-		# if(list_of_nodes.get(nodeid) != None):
-		# 	if(list_of_nodes[nodeid]['active']):
-		server = Process(target=send_data_to_usb,args=([nodeid,value]))
-		server.start()
-	else:
-		print("user", user, "did not book",nodeid)
-		logger.warn("user " + user + " did not book " + nodeid + "; sending: " +  value)
+	try:
+		if nodeid in active_users_copy.get(user):
+			print("user", user, "booked",nodeid)
+			logger.info("user " + user + " booked " + nodeid + "; sending: " +  value)
+			# if(list_of_nodes.get(nodeid) != None):
+			# 	if(list_of_nodes[nodeid]['active']):
+			server = Process(target=send_data_to_usb,args=([nodeid,value]))
+			server.start()
+		else:
+			print("user", user, "did not book",nodeid)
+			logger.warn("user " + user + " did not book " + nodeid + "; sending: " +  value)
+	except:
+		traceback.print_stack()
+		logger.warn("user " + user + ", not likely to be active, pushing to: " + nodeid + "; sending: " +  value)
 
 
 def send_data_to_usb(nodeid,value):

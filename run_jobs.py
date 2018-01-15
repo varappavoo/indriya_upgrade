@@ -139,12 +139,10 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command, elf_f
 					if motetype == 'telosb':
 						burn_done = "1" if(run_cmd(ssh_burn_command, "Programming: OK")) else "0"
 					elif motetype == 'cc2650':
-<<<<<<< HEAD
 						# burn_done = "0" if(run_cmd(ssh_burn_command, "Failed:")) else "1"
-						burn_done = "1" if(run_cmd(ssh_burn_command, "Program verification successful")) else "0"
-=======
+						# burn_done = "1" if(run_cmd(ssh_burn_command, "Program verification successful")) else "0"
 						burn_done = "1" if(run_cmd(ssh_burn_command, "Finish Loading")) else "0"
->>>>>>> 50b9053d8e774072a64e304ec8cb1cb97c575dd4
+
 					count_burn_tries = count_burn_tries + 1
 					if count_burn_tries > 1:
 						sleep(WAIT_BEFORE_RETRY)

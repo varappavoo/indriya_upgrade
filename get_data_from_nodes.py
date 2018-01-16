@@ -149,13 +149,26 @@ def start_collection_from(nodeid, gateway, port, manager_proxy_nodes_status):
 		sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 		sock_node.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
 		# sock_node.connect((json_nodes_virt_id_phy_id[nodeid]['gateway'],json_nodes_virt_id_phy_id[nodeid]['port']))
-		sock_node.connect((gateway, port))
+		try:
+			sock_node.connect((gateway, port))
+		except:
+			logger.warning("could not connect to " + str(gateway) + ":" + str(port) )
+			if got_lock:
+				tmp_mote_lock.release()
+			return 0 # break out
 		
 
 		sock_aggr_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		sock_aggr_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 		sock_aggr_server.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
-		sock_aggr_server.connect((server_aggr_ip, server_aggr_port))
+
+		try:
+			sock_aggr_server.connect((server_aggr_ip, server_aggr_port))
+		except:
+			logger.warning("could not connect to " + str(server_aggr_ip) + ":" + str(server_aggr_port) )
+			if got_lock:
+				tmp_mote_lock.release()
+			return 0 # break out
 
 		sock_rt_stream_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
 

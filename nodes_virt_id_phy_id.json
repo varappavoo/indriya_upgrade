@@ -1,21 +1,22 @@
 {
-	"235":{"gateway": "gateway1", "port": 4000, "serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8O49-if00-port0"},
-	"211":{"gateway": "gateway1", "port": 4001, "serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8R2Z-if00-port0"},
-	"255":{"gateway": "gateway1", "port": 4002, "serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBTNPM52-if00-port0"},
-	"205":{"gateway": "gateway1", "port": 4003, "serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8PVV-if00-port0"},
-	"230":{"gateway": "gateway1", "port": 4004,"serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8RBG-if00-port0"},
-	"206":{"gateway": "gateway1", "port": 4005,"serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8ZJ4-if00-port0"},
-	"202":{"gateway": "gateway1", "port": 4006,"serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8QKY-if00-port0"},
-	"210":{"gateway": "gateway1", "port": 4007,"serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBTNB6EA-if00-port0"},
-
-	"28417":{"gateway": "gateway1", "port": 4100,"serial_id": "/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.03.00.07__Embed_with_CMSIS-DAP_L2313-if00", "flash_file":"/home/cirlab/flash_sensortag_linux_64/user_files/configs/L2313.ccxml"},
-	"52739":{"gateway": "gateway1", "port": 4101,"serial_id": "/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.03.00.07__Embed_with_CMSIS-DAP_L3003399-if00", "flash_file":"/home/cirlab/flash_sensortag_linux_64/user_files/configs/L3003399.ccxml"},
-	"51078":{"gateway": "gateway1", "port": 4102,"serial_id": "/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.03.00.07__Embed_with_CMSIS-DAP_L3003391-if00", "flash_file":"/home/cirlab/flash_sensortag_linux_64/user_files/configs/L3003391.ccxml"},
-	"7041":{"gateway": "gateway1", "port": 4110,"serial_id": "/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.03.00.08__Embed_with_CMSIS-DAP_L3002833-if00", "flash_file":"/home/cirlab/flash_sensortag_linux_64/user_files/configs/L3002833.ccxml"},
-
-	"58243":{"gateway": "gateway2", "port": 4100,"serial_id": "/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.03.00.07__Embed_with_CMSIS-DAP_L1123-if00", "flash_file":"/home/cirlab/flash_sensortag_linux_64/user_files/configs/L1123.ccxml"},
-	"227":{"gateway": "gateway2", "port": 4000,"serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBSF8O4I-if00-port0"},
-
-	"219":{"gateway": "lenovo_gw_1", "port": 4000,"serial_id": "/dev/serial/by-id/usb-XBOW_Crossbow_Telos_Rev.B_XBTN93I8-if00-port0"},
-	"cc9999":{"gateway": "lenovo_gw_1", "port": 4100,"serial_id": "/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L249-if00", "flash_file":"/home/cirlab/flash_sensortag_linux_64/user_files/configs/L249.ccxml"}
+        "47235":{"gateway":"mac-mini-com1-l2-common","port":4000,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L1046-if00","flash_file":"/home/cirlab/sensortag_configs/L1046.ccxml"},
+        "58243":{"gateway":"mac-mini-com1-l2-common","port":4001,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L1123-if00","flash_file":"/home/cirlab/sensortag_configs/L1123.ccxml"},
+        "46599":{"gateway":"mac-mini-com1-l2-common","port":4002,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L1197-if00","flash_file":"/home/cirlab/sensortag_configs/L1197.ccxml"},
+        "11265":{"gateway":"mac-mini-com1-l2-common","port":4003,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L1524-if00","flash_file":"/home/cirlab/sensortag_configs/L1524.ccxml"},
+        "28417":{"gateway":"mac-mini-com1-l2-common","port":4004,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L2313-if00","flash_file":"/home/cirlab/sensortag_configs/L2313.ccxml"},
+        "25347":{"gateway":"mac-mini-com1-l2-common","port":4005,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L242-if00","flash_file":"/home/cirlab/sensortag_configs/L242.ccxml"},
+        "22406":{"gateway":"mac-mini-com1-l2-common","port":4006,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L3000688-if00","flash_file":"/home/cirlab/sensortag_configs/L3000688.ccxml"},
+        "41219":{"gateway":"mac-mini-com1-l2-common","port":4007,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L3000693-if00","flash_file":"/home/cirlab/sensortag_configs/L3000693.ccxml"},
+        "31748":{"gateway":"mac-mini-com1-l2-common","port":4008,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L3000695-if00","flash_file":"/home/cirlab/sensortag_configs/L3000695.ccxml"},
+        "27648":{"gateway":"mac-mini-com1-l2-common","port":4009,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L3000696-if00","flash_file":"/home/cirlab/sensortag_configs/L3000696.ccxml"},
+        "7041":{"gateway":"mac-mini-com1-l2-common","port":4011,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L3002833-if00","flash_file":"/home/cirlab/sensortag_configs/L3002833.ccxml"},
+        "51078":{"gateway":"mac-mini-com1-l2-common","port":4012,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L3003391-if00","flash_file":"/home/cirlab/sensortag_configs/L3003391.ccxml"},
+        "52739":{"gateway":"mac-mini-com1-l2-common","port":4013,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L3003399-if00","flash_file":"/home/cirlab/sensortag_configs/L3003399.ccxml"},
+        "39431":{"gateway":"mac-mini-com1-l2-common","port":4014,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L3003401-if00","flash_file":"/home/cirlab/sensortag_configs/L3003401.ccxml"},
+        "10118":{"gateway":"mac-mini-com1-l2-common","port":4015,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L32-if00","flash_file":"/home/cirlab/sensortag_configs/L32.ccxml"},
+        "48007":{"gateway":"mac-mini-com1-l2-common","port":4016,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L376-if00","flash_file":"/home/cirlab/sensortag_configs/L376.ccxml"},
+        "0":{"gateway":"mac-mini-com1-l2-common","port":4017,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L37-if00","flash_file":"/home/cirlab/sensortag_configs/L37.ccxml"},
+        "43654":{"gateway":"mac-mini-com1-l2-common","port":4018,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L436-if00","flash_file":"/home/cirlab/sensortag_configs/L436.ccxml"},
+        "45447":{"gateway":"mac-mini-com1-l2-common","port":4019,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L74-if00","flash_file":"/home/cirlab/sensortag_configs/L74.ccxml"},
+        "29575":{"gateway":"mac-mini-com1-l2-common","port":4020,"serial_id":"/dev/serial/by-id/usb-Texas_Instruments_XDS110__02.02.05.01__with_CMSIS-DAP_L863-if00","flash_file":"/home/cirlab/sensortag_configs/L863.ccxml"}
 }

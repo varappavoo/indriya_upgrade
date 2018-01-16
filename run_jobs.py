@@ -105,7 +105,7 @@ def run_cmd(command, success_identifier, success=True):
 		return True
 	else:
 		# print("FAILURE!!")
-		# logger.warning("FAILURE:" + command + "\n\n" + output + "\n" + err)
+		logger.warning("FAILURE:" + command + "\n\n" + output + "\n" + err)
 		return False
 
 def check_binary_file(elf_file, motetype):
@@ -114,7 +114,7 @@ def check_binary_file(elf_file, motetype):
 	elif motetype == 'cc2650':
 		file_type = 'ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, not stripped'
 	else:
-		logger.warn("system does not support for binary file of type " + motetype)
+		logger.warn("system does not support for binary file of type " + str(motetype))
 		return False
 	return run_cmd('file ' + elf_file, file_type)
 
@@ -139,7 +139,10 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command, elf_f
 					if motetype == 'telosb':
 						burn_done = "1" if(run_cmd(ssh_burn_command, "Programming: OK")) else "0"
 					elif motetype == 'cc2650':
-						burn_done = "0" if(run_cmd(ssh_burn_command, "Failed:")) else "1"
+						# burn_done = "0" if(run_cmd(ssh_burn_command, "Failed:")) else "1"
+						# burn_done = "1" if(run_cmd(ssh_burn_command, "Program verification successful")) else "0"
+						burn_done = "1" if(run_cmd(ssh_burn_command, "Finish Loading")) else "0"
+
 					count_burn_tries = count_burn_tries + 1
 					if count_burn_tries > 1:
 						sleep(WAIT_BEFORE_RETRY)
@@ -147,9 +150,8 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command, elf_f
 
 				
 				if(burn_done == "1"):
-					logger.info("SUCCESS:" + command)
-				else:
-					logger.warning("FAILURE:" + command + "\n\n" + output + "\n" + err)
+					logger.info("SUCCESS:" + ssh_burn_command)
+
 			else:
 				burn_results[result_id]['job_config'][motetype][moteref]['burn'] = "0"
 				logger.warning("Not attempting to burn as RSYNC was unsuccessful: \n" + scp_command)
@@ -218,9 +220,14 @@ def schedule_job(json_jobs_waiting):
 										# + ":" + gateway_binaries_dir
 					scp_command = "rsync -av --ignore-existing " + server_binaries_dir + job['binary_file'] + " "  + gateway_user + "@" + json_nodes_virt_id_phy_id[mote]['gateway'] \
 										+ ":" + gateway_binaries_dir
+					# ssh_burn_command = "ssh " + gateway_user + "@" +json_nodes_virt_id_phy_id[mote]['gateway'] + \
+					# 					" '/home/cirlab/flash_sensortag_linux_64/dslite.sh -v -c "\
+					# 					 + json_nodes_virt_id_phy_id[mote]['flash_file'] + " -f " + gateway_binaries_dir + job['binary_file']  + "'"
 					ssh_burn_command = "ssh " + gateway_user + "@" +json_nodes_virt_id_phy_id[mote]['gateway'] + \
-										" '/home/cirlab/flash_sensortag_linux_64/dslite.sh -v -c "\
-										 + json_nodes_virt_id_phy_id[mote]['flash_file'] + " -f " + gateway_binaries_dir + job['binary_file']  + "'"
+										" 'sudo /home/cirlab/ti/uniflash/uniflash.sh -verbose 1 -ccxml "\
+					 					+ json_nodes_virt_id_phy_id[mote]['flash_file'] + " -program " + gateway_binaries_dir + job['binary_file']  + " -targetOp reset restart run'"
+ 					 
+
 					print(scp_command)
 					print(ssh_burn_command)
 					

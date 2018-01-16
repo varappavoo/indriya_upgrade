@@ -30,7 +30,7 @@ running_jobs_lock = threading.Lock()
 cancel_jobs_lock = threading.Lock()
 
 # import get_data_from_nodes
-GAP_BEFORE_STARTING_NEW_JOB = 30
+GAP_BEFORE_STARTING_NEW_JOB = 90
 GAP_AFTER_DEACTIVATING_MOTES = 2
 JOB_MIN_RUNNING_TIME = 60
 

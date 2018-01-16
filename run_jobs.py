@@ -14,7 +14,7 @@ from zip_job_data import *
 
 MAX_RETRIES_BURN = 3
 WAIT_BEFORE_RETRY = 5
-MAX_TIME_TO_WAIT_FOR_LOCK_ON_MOTE = 30
+MAX_TIME_TO_WAIT_FOR_LOCK_ON_MOTE = 60
 
 logging.config.fileConfig('logging.conf')
 

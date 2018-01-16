@@ -20,7 +20,7 @@ logger = logging.getLogger('zip_result_data')
 
 
 TIME_GAP_BETWEEN_JOBS_FOR_ZIPPING_SECS = 5
-TIME_GAP_TO_DRAIN_PIPE = 30 # TIME BETWEEN EXPERIMENT STARTS... from buring to getting data from NEWLY BURN PROGRAM...
+TIME_GAP_TO_DRAIN_PIPE = 45 # TIME BETWEEN EXPERIMENT STARTS... from buring to getting data from NEWLY BURN PROGRAM...
 
 def run_cmd(command, success_identifier=""):
 	p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE ) # stdout=subprocess.PIPE, shell=True)

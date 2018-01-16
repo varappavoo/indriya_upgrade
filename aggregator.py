@@ -62,9 +62,9 @@ def execute_request(start,json_body):
 		result =  client.write_points(json_body)#,time_precision='u')   
 	except:
 		print(traceback.print_exc())
-		print(">>>>>>>json_data\n",str(json_data))
+		print(">>>>>>>json_data\n",str(json_body))
 		logger.warn("ERROR INFLUX writing data: write_points")
-		logger.warn(str(json_data))
+		logger.warn(str(json_body))
 
 def savetodb_batching(json_data,active_users):
 	global json_body, count, start, tmp_time, mqtt_client

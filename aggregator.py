@@ -67,42 +67,45 @@ def execute_request(start,json_body):
 		logger.warn(str(json_body))
 
 def savetodb_batching(json_data,active_users):
-	global json_body, count, start, tmp_time, mqtt_client
-	# current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+	try:
+		global json_body, count, start, tmp_time, mqtt_client
+		# current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
-	# sleep(0.00001)
-	# print("json_data['value']",json_data['value'])
-	value = json_data['value'] if json_data['value'] != "" else " "
-	json_body.append({
-		"measurement": table,
-		"time": json_data['time'],
-		"tags": {"nodeid": json_data['nodeid']},
-		"fields": {"value": value}
-	})
-	count=count+1
-	# except:
-	# 	print("invalid nodeid",data_split[0])
-	#     # print(traceback.print_exc())
-	# print("-------------------------------------------------------------------------")
-	# print(active_users.keys())
-	# print("-------------------------------------------------------------------------")
-	for key in active_users.keys():
-		#print("1",json_data['nodeid'],active_users[key])
-		if (json_data['nodeid'] in active_users[key]):
-			# print("2",key,json_data['nodeid'],active_users[key])
-			# print("mqtt_client.publish",key, json.dumps(json_data), mqtt_qos)
-			# print(mqtt_client.publish(key, json.dumps(json_data), mqtt_qos))
-			mqtt_client.publish(key, json.dumps(json_data), mqtt_qos)
+		# sleep(0.00001)
+		# print("json_data['value']",json_data['value'])
+		value = json_data['value'] if json_data['value'] != "" else " "
+		json_body.append({
+			"measurement": table,
+			"time": json_data['time'],
+			"tags": {"nodeid": json_data['nodeid']},
+			"fields": {"value": value}
+		})
+		count=count+1
+		# except:
+		# 	print("invalid nodeid",data_split[0])
+		#     # print(traceback.print_exc())
+		# print("-------------------------------------------------------------------------")
+		# print(active_users.keys())
+		# print("-------------------------------------------------------------------------")
+		for key in active_users.keys():
+			#print("1",json_data['nodeid'],active_users[key])
+			if (json_data['nodeid'] in active_users[key]):
+				# print("2",key,json_data['nodeid'],active_users[key])
+				# print("mqtt_client.publish",key, json.dumps(json_data), mqtt_qos)
+				# print(mqtt_client.publish(key, json.dumps(json_data), mqtt_qos))
+				mqtt_client.publish(key, json.dumps(json_data), mqtt_qos)
 
 
-	now = time()
-	if(now - tmp_time >= 10 or count==db_batch_size):
-		# print(i)
-		server = multiprocessing.Process(target=execute_request,args=([start,json_body]))
-		server.start()
-		json_body = []
-		tmp_time = now
-		count=0
+		now = time()
+		if(now - tmp_time >= 10 or count==db_batch_size):
+			# print(i)
+			server = multiprocessing.Process(target=execute_request,args=([start,json_body]))
+			server.start()
+			json_body = []
+			tmp_time = now
+			count=0
+	except:
+		print(traceback.print_exc())
 
 def dispatcher(json_data):
 	# assign ports to active jobs and forward the data...
@@ -180,14 +183,16 @@ def listen(active_users):
 	tcpServer.bind(("0.0.0.0", server_aggr_port))
 	threads = []
 	while True:
-		tcpServer.listen(100)
-		print("Multithreaded Python aggregator server : Waiting for connections from TCP clients...")
-		logger.info('aggregator started... listening on port ' + str(server_aggr_port))
-		(client_sock, (ip,port)) = tcpServer.accept()
-		newthread = ClientThread(ip,port,client_sock,active_users)
-		newthread.start()
-		threads.append(newthread)
-
+		try:
+			tcpServer.listen(500)
+			print("Multithreaded Python aggregator server : Waiting for connections from TCP clients...")
+			logger.info('aggregator started... listening on port ' + str(server_aggr_port))
+			(client_sock, (ip,port)) = tcpServer.accept()
+			newthread = ClientThread(ip,port,client_sock,active_users)
+			newthread.start()
+			threads.append(newthread)
+		except:
+			print(traceback.print_exc())
 	# for t in threads:
 	#     t.join()
 # listen(active_users)

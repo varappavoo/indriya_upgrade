@@ -17,7 +17,8 @@ logging.config.fileConfig('logging.conf')
 # create logger
 logger = logging.getLogger('rt_input')
 
-active_users_copy = {}
+# active_users_copy = {}
+active_motes_mirror = None
 broker="ocean.comp.nus.edu.sg"
 with open('nodes_virt_id_phy_id.json') as json_data:
 	json_nodes_virt_id_phy_id = json.load(json_data)
@@ -40,16 +41,18 @@ with open('nodes_virt_id_phy_id.json') as json_data:
 
 
 def on_message(client, userdata, message):
-	global active_users_copy
+	# global active_users_copy
+	global active_motes_mirror
 	print("received message = ", str(message.topic) + " - " + str(message.payload.decode("utf-8")))
 	user =  str(message.topic).split("/")[0]
 	nodeid = str(message.topic).split("/")[2]
 	value = str(message.payload.decode("utf-8"))
-	print(active_users_copy)
-	logger.info(str(active_users_copy))
+	# print(active_users_copy)
+	# logger.info(str(active_users_copy))
 	print("nodeid:",nodeid,"value:",value)
 	try:
-		if nodeid in active_users_copy.get(user):
+		# if nodeid in active_users_copy.get(user):
+		if active_motes_mirror[nodeid] == user:
 			print("user", user, "booked",nodeid)
 			logger.info("user " + user + " booked " + nodeid + "; sending: " +  value)
 			# if(list_of_nodes.get(nodeid) != None):
@@ -73,9 +76,11 @@ def send_data_to_usb(nodeid,value):
 	sock_node.close()
 
 
-def accept_rt_input(active_users):
-	global active_users_copy
-	active_users_copy = active_users
+def accept_rt_input(active_users, active_motes):
+	# global active_users_copy
+	# active_users_copy = active_users
+	global active_motes_mirror
+	active_motes_mirror = active_motes
 	logger.info("starting real time input from users")
 	client= paho.Client("client-indriya") 
 	client.on_message=on_message

@@ -66,7 +66,7 @@ def execute_request(start,json_body):
 		logger.warn("ERROR INFLUX writing data: write_points")
 		logger.warn(str(json_body))
 
-def savetodb_batching(json_data,active_users):
+def savetodb_batching(json_data,active_users, active_motes):
 	try:
 		global json_body, count, start, tmp_time, mqtt_client
 		# current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
@@ -86,14 +86,21 @@ def savetodb_batching(json_data,active_users):
 		#     # print(traceback.print_exc())
 		# print("-------------------------------------------------------------------------")
 		# print(active_users.keys())
-		# print("-------------------------------------------------------------------------")
-		for key in active_users.keys():
-			#print("1",json_data['nodeid'],active_users[key])
-			if (json_data['nodeid'] in active_users[key]):
-				# print("2",key,json_data['nodeid'],active_users[key])
-				# print("mqtt_client.publish",key, json.dumps(json_data), mqtt_qos)
-				# print(mqtt_client.publish(key, json.dumps(json_data), mqtt_qos))
-				mqtt_client.publish(key, json.dumps(json_data), mqtt_qos)
+		# # print("-------------------------------------------------------------------------")
+		# for key in active_users.keys():
+		# 	#print("1",json_data['nodeid'],active_users[key])
+		# 	if (json_data['nodeid'] in active_users[key]):
+		# 		# print("2",key,json_data['nodeid'],active_users[key])
+		# 		# print("mqtt_client.publish",key, json.dumps(json_data), mqtt_qos)
+		# 		# print(mqtt_client.publish(key, json.dumps(json_data), mqtt_qos))
+		# 		mqtt_client.publish(key, json.dumps(json_data), mqtt_qos)
+
+
+		if active_motes.get(json_data['nodeid']) != None:
+			mqtt_client.publish(active_motes.get(json_data['nodeid']), json.dumps(json_data), mqtt_qos)
+		else:
+			logger.info("nodeid not found in active_motes!!!")
+
 
 
 		now = time()
@@ -120,12 +127,13 @@ def dispatcher(json_data):
 #####################################################################################
 class ClientThread(Thread):
 
-	def __init__(self,ip,port,sock,active_users):
+	def __init__(self,ip,port,sock,active_users, active_motes):
 		Thread.__init__(self)
 		self.ip = ip
 		self.port = port
 		self.sock = sock
 		self.active_users = active_users
+		self.active_motes = active_motes
 		self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 		self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_QUICKACK, 1)
 		print("[+] New server socket thread started for " + ip + ":" + str(port))
@@ -158,14 +166,14 @@ class ClientThread(Thread):
 					json_data['time']=current_time
 					# print(json_data)
 
-					savetodb_batching(json_data,self.active_users)
+					savetodb_batching(json_data,self.active_users, self.active_motes)
 
 				last_dangling_chunk = data_received_split[-1]
 			except:
 				# print(data_received.decode('utf-8'))
 				print(traceback.print_exc())
 
-def listen(active_users):
+def listen(active_users, active_motes):
 
 	global mqtt_broker,port
 	mqtt_client.on_publish = on_publish                       
@@ -188,7 +196,7 @@ def listen(active_users):
 			print("Multithreaded Python aggregator server : Waiting for connections from TCP clients...")
 			logger.info('aggregator started... listening on port ' + str(server_aggr_port))
 			(client_sock, (ip,port)) = tcpServer.accept()
-			newthread = ClientThread(ip,port,client_sock,active_users)
+			newthread = ClientThread(ip,port,client_sock,active_users, active_motes)
 			newthread.start()
 			threads.append(newthread)
 		except:

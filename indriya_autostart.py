@@ -67,7 +67,7 @@ def check_scheduler():
 			scheduler.run(blocking=False)
 		except:
 			print("check_scheduler exception")
-		sleep(10)
+		sleep(60)
 
 
 
@@ -143,6 +143,11 @@ def deactive_motes(mote_list):
 		else:
 			active_users[user]=temp_list
 	print(active_users)
+	
+	for nodeid in mote_list:
+		if active_motes.get(nodeid) != None:
+			active_motes.pop(nodeid)
+
 	active_users_lock.release()
 	sleep(GAP_AFTER_DEACTIVATING_MOTES) # takes some time as process polls... to check active motes from active users lists
 
@@ -153,6 +158,10 @@ def update_active_users(user,mote_list):
 		active_users[user]=[]
 	active_users[user] = active_users[user] + mote_list
 	print(active_users)
+
+	for nodeid in mote_list:
+		active_motes[nodeid] = user
+
 	active_users_lock.release()
 
 def burn_motes(json_data):
@@ -289,6 +298,10 @@ def add_job_to_job_queue_and_scheduler(json_data):
 		first_run = 0
 	try:
 		job_queue_lock.acquire()
+
+		jobs_queue = pickle.load( open( "jobs_queue.p", "rb" ) )
+		scheduler = pickle.load( open( "scheduler.p", "rb" ) )
+
 		jobs_queue[json_data['result_id']]={}
 		jobs_queue[json_data['result_id']]['json_data']=json_data
 
@@ -346,6 +359,11 @@ def cancel_job_from_queue(json_data):
 		# use blocking false with sleep!!!
 
 		job_queue_lock.acquire()
+
+		jobs_queue = pickle.load( open( "jobs_queue.p", "rb" ) )
+		scheduler = pickle.load( open( "scheduler.p", "rb" ) )
+
+
 		if(jobs_queue.get(result_id) != None):
 			#job_queue_lock.release() # finish_job also needs that lock
 			#now = time()
@@ -481,7 +499,7 @@ def reload_jobs():
 	for result_id in keys:
 		print("#############################################################################")
 		print(result_id, jobs_queue[result_id]['json_data']['time']['to'], str(time()))
-		if(int(jobs_queue[result_id]['json_data']['time']['to']) < int(time())):
+		if(int(jobs_queue[result_id]['json_data']['time']['to']) < int(time()) + GAP_BEFORE_STARTING_NEW_JOB*3): # start gap + run for at least gap + stop gap
 			cancel_job_from_queue(jobs_queue[result_id]['json_data'])
 
 	if scheduler_down:
@@ -508,8 +526,8 @@ def cancel_job():
 	response={}
 	response['result_id']=json_data['result_id']
 	response['action']='cancel_job'
-	# response['result']=result
-	response['result']=1
+	response['result']=result
+	# response['result']=1
 	return str(response)
 
 # @app.route("/cancel_job", methods=['POST'])
@@ -626,17 +644,18 @@ if __name__ == '__main__':
 
 		manager_proxy_nodes_status = manager.dict()
 		active_users = manager.dict()
+		active_motes = manager.dict()
 		# scheduler_dict = manager.dict()
 		# scheduler_dict['scheduler'] = scheduler
 
-		aggregator_server = Process(target=listen,args=([active_users]))
+		aggregator_server = Process(target=listen,args=([active_users,active_motes]))
 		aggregator_server.start()
 		sleep(2)
 
-		get_data_from_nodes_server = Process(target=check_nodes_status_from_db,args=([manager_proxy_nodes_status,active_users]))
+		get_data_from_nodes_server = Process(target=check_nodes_status_from_db,args=([manager_proxy_nodes_status,active_users,active_motes]))
 		get_data_from_nodes_server.start()
 
-		sub_nodeid_rt_input_server = Process(target=accept_rt_input,args=([active_users]))
+		sub_nodeid_rt_input_server = Process(target=accept_rt_input,args=([active_users,active_motes]))
 		sub_nodeid_rt_input_server.start()
 
 		app_server = Process(target=app.run,args=())

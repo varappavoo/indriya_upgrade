@@ -52,7 +52,7 @@ def on_message(client, userdata, message):
 	print("nodeid:",nodeid,"value:",value)
 	try:
 		# if nodeid in active_users_copy.get(user):
-		if active_motes_mirror[nodeid] == user:
+		if active_motes_mirror.get(nodeid) == user:
 			print("user", user, "booked",nodeid)
 			logger.info("user " + user + " booked " + nodeid + "; sending: " +  value)
 			# if(list_of_nodes.get(nodeid) != None):

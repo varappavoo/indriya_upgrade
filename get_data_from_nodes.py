@@ -33,7 +33,7 @@ SOCKET_TIMEOUT = 20
 with open('nodes_virt_id_phy_id.json') as json_data:
 	json_nodes_virt_id_phy_id = json.load(json_data)
 
-def check_nodes_status_from_db(manager_proxy_nodes_status, active_users):
+def check_nodes_status_from_db(manager_proxy_nodes_status, active_users, active_motes):
 	################
 	# start n stop collection based on status from db
 	################
@@ -45,16 +45,17 @@ def check_nodes_status_from_db(manager_proxy_nodes_status, active_users):
 
 	test_count=0
 	while (True):
-		active_motes = [value for values in active_users.values() for value in values]
+		# active_motes_list = [value for values in active_users.values() for value in values]
+		active_motes_list = list(active_motes.keys())
 
 		for nodeid in manager_proxy_nodes_status.keys():
-			if nodeid not in active_motes:
+			if nodeid not in active_motes_list:
 				manager_proxy_nodes_status[nodeid] = INACTIVE
 
 		# print("-------------------------------------------------------------------------")
 		# print(active_users)
 		# print("-------------------------------------------------------------------------")
-		for nodeid in active_motes:
+		for nodeid in active_motes_list:
 			if manager_proxy_nodes_status.get(nodeid) == None or manager_proxy_nodes_status[nodeid] != ACTIVE: # still inactive
 				if json_nodes_virt_id_phy_id.get(nodeid) != None:
 					gateway = json_nodes_virt_id_phy_id[nodeid]['gateway']

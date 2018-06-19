@@ -73,34 +73,35 @@ def savetodb_batching(json_data,active_users, active_motes):
 
 		# sleep(0.00001)
 		# print("json_data['value']",json_data['value'])
-		value = json_data['value'] if json_data['value'] != "" else " "
-		json_body.append({
-			"measurement": table,
-			"time": json_data['time'],
-			"tags": {"nodeid": json_data['nodeid']},
-			"fields": {"value": value}
-		})
-		count=count+1
-		# except:
-		# 	print("invalid nodeid",data_split[0])
-		#     # print(traceback.print_exc())
-		# print("-------------------------------------------------------------------------")
-		# print(active_users.keys())
-		# # print("-------------------------------------------------------------------------")
-		# for key in active_users.keys():
-		# 	#print("1",json_data['nodeid'],active_users[key])
-		# 	if (json_data['nodeid'] in active_users[key]):
-		# 		# print("2",key,json_data['nodeid'],active_users[key])
-		# 		# print("mqtt_client.publish",key, json.dumps(json_data), mqtt_qos)
-		# 		# print(mqtt_client.publish(key, json.dumps(json_data), mqtt_qos))
-		# 		mqtt_client.publish(key, json.dumps(json_data), mqtt_qos)
+
+		if(json_data != None):
+			value = json_data['value'] if json_data['value'] != "" else " "
+			json_body.append({
+				"measurement": table,
+				"time": json_data['time'],
+				"tags": {"nodeid": json_data['nodeid']},
+				"fields": {"value": value}
+			})
+			count=count+1
+			# except:
+			# 	print("invalid nodeid",data_split[0])
+			#     # print(traceback.print_exc())
+			# print("-------------------------------------------------------------------------")
+			# print(active_users.keys())
+			# # print("-------------------------------------------------------------------------")
+			# for key in active_users.keys():
+			# 	#print("1",json_data['nodeid'],active_users[key])
+			# 	if (json_data['nodeid'] in active_users[key]):
+			# 		# print("2",key,json_data['nodeid'],active_users[key])
+			# 		# print("mqtt_client.publish",key, json.dumps(json_data), mqtt_qos)
+			# 		# print(mqtt_client.publish(key, json.dumps(json_data), mqtt_qos))
+			# 		mqtt_client.publish(key, json.dumps(json_data), mqtt_qos)
 
 
-		if active_motes.get(json_data['nodeid']) != None:
-			mqtt_client.publish(active_motes.get(json_data['nodeid']), json.dumps(json_data), mqtt_qos)
-		else:
-			logger.info("nodeid not found in active_motes!!!")
-
+			if active_motes.get(json_data['nodeid']) != None:
+				mqtt_client.publish(active_motes.get(json_data['nodeid']), json.dumps(json_data), mqtt_qos)
+			else:
+				logger.info("nodeid (" + json_data['nodeid'] + ") not found in active_motes!!!")
 
 
 		now = time()
@@ -139,6 +140,8 @@ class ClientThread(Thread):
 		print("[+] New server socket thread started for " + ip + ":" + str(port))
 		logger.info("new server socket thread started for " + ip + ":" + str(port))
 
+		self.sock.settimeout(15.0) # 15 seconds before raising socket.timeout
+
 	def run(self):
 		tmp_time = time()
 		json_body = []
@@ -169,6 +172,9 @@ class ClientThread(Thread):
 					savetodb_batching(json_data,self.active_users, self.active_motes)
 
 				last_dangling_chunk = data_received_split[-1]
+
+			except socket.timeout:
+					savetodb_batching(None, self.active_users, self.active_motes)	# save last bytes of if do not exceed max size or no new data to trigger save timeout
 			except:
 				# print(data_received.decode('utf-8'))
 				print(traceback.print_exc())
@@ -201,6 +207,7 @@ def listen(active_users, active_motes):
 			threads.append(newthread)
 		except:
 			print(traceback.print_exc())
+			sleep(1)
 	# for t in threads:
 	#     t.join()
 # listen(active_users)

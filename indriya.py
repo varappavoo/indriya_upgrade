@@ -66,7 +66,7 @@ def check_scheduler():
 			scheduler.run(blocking=False)
 		except:
 			print("check_scheduler exception")
-		sleep(1)
+		sleep(300)
 
 
 

@@ -1,6 +1,6 @@
-active_jobs={}
-active_jobs['cirlab']=['255','235','7041']
-active_jobs['alice']=['211']
-active_jobs['bob']=['205']
-active_jobs['malory']=['555']
+active_users={}
+active_users['cirlab']=['255','235','7041']
+active_users['alice']=['211']
+active_users['bob']=['205']
+active_users['malory']=['555']
 

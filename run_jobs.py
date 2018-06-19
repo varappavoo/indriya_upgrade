@@ -99,7 +99,8 @@ def run_cmd(command, success_identifier, success=True):
 		# print("SUCCESS!!")
 		# logger.info("SUCCESS:" + command)
 		return True
-	elif(not success and (not(output.find(success_identifier) > -1) or not(err.find(success_identifier) > -1))): # here we have an identifier for failure...
+	elif(err == "" and not success and (not(output.find(success_identifier) > -1) or not(err.find(success_identifier) > -1))): # here we have an identifier for failure...
+		# err != ""  checked for cc2650 only!!!
 		# print("SUCCESS!!")
 		# logger.info("SUCCESS:" + command)
 		return True
@@ -141,7 +142,8 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command, elf_f
 					elif motetype == 'cc2650':
 						# burn_done = "0" if(run_cmd(ssh_burn_command, "Failed:")) else "1"
 						# burn_done = "1" if(run_cmd(ssh_burn_command, "Program verification successful")) else "0"
-						burn_done = "1" if(run_cmd(ssh_burn_command, "Finish Loading")) else "0"
+						# burn_done = "1" if(run_cmd(ssh_burn_command, "Finish Loading")) else "0"
+						burn_done = "1" if(run_cmd(ssh_burn_command, "Error", False)) else "0"
 
 					count_burn_tries = count_burn_tries + 1
 					if count_burn_tries > 1:
@@ -223,10 +225,12 @@ def schedule_job(json_jobs_waiting):
 					# ssh_burn_command = "ssh " + gateway_user + "@" +json_nodes_virt_id_phy_id[mote]['gateway'] + \
 					# 					" '/home/cirlab/flash_sensortag_linux_64/dslite.sh -v -c "\
 					# 					 + json_nodes_virt_id_phy_id[mote]['flash_file'] + " -f " + gateway_binaries_dir + job['binary_file']  + "'"
+					# ssh_burn_command = "ssh " + gateway_user + "@" +json_nodes_virt_id_phy_id[mote]['gateway'] + \
+					# 					" 'sudo /home/cirlab/ti/uniflash/uniflash.sh -verbose 1 -ccxml "\
+					#  					+ json_nodes_virt_id_phy_id[mote]['flash_file'] + " -program " + gateway_binaries_dir + job['binary_file']  + " -targetOp reset restart run'"
+ 					
 					ssh_burn_command = "ssh " + gateway_user + "@" +json_nodes_virt_id_phy_id[mote]['gateway'] + \
-										" 'sudo /home/cirlab/ti/uniflash/uniflash.sh -verbose 1 -ccxml "\
-					 					+ json_nodes_virt_id_phy_id[mote]['flash_file'] + " -program " + gateway_binaries_dir + job['binary_file']  + " -targetOp reset restart run'"
- 					 
+										" 'uniflash_custom_rewrite.sh " + json_nodes_virt_id_phy_id[mote]['flash_file'] + " " + gateway_binaries_dir + job['binary_file']  + "'"
 
 					print(scp_command)
 					print(ssh_burn_command)

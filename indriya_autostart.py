@@ -31,7 +31,9 @@ running_jobs_lock = threading.Lock()
 cancel_jobs_lock = threading.Lock()
 
 # import get_data_from_nodes
-GAP_BEFORE_STARTING_NEW_JOB = 90
+# GAP_BEFORE_STARTING_NEW_JOB = 90
+# GAP_BEFORE_STARTING_NEW_JOB = 10
+TIME_TO_EXECUTE_A_JOB = 120
 GAP_AFTER_DEACTIVATING_MOTES = 2
 JOB_MIN_RUNNING_TIME = 60
 
@@ -55,6 +57,12 @@ cc2650_maintenance_binary_filename = "welcome.elf"
 first_run=1
 running_jobs = {}
 running_jobs['active'] = []
+hibernate = 1
+perform_maintenance_after_job = 0
+if perform_maintenance_after_job:
+	GAP_BEFORE_STARTING_NEW_JOB = 90
+else:
+	GAP_BEFORE_STARTING_NEW_JOB = 10
 
 def check_scheduler():
 	global scheduler
@@ -76,11 +84,11 @@ def schedule_job(json_data):
 	start_new_thread(process_job,(json_data,))
 	# process_job(json_data)
 
-def finish_job(json_data,maintenance=False):
+def finish_job(json_data,maintenance_job=False): # Maintenance True means the finish_job is a maintenance once ;), if it's not, then schedule the maintenance
 	# logger.info("finishing job with result_id..." + str(json_data['result_id']))
 	# start_new_thread(compile_compress_data_for_job(json_data))
 	start_new_thread(compile_compress_data_for_job,(json_data,))
-	if not maintenance:
+	if perform_maintenance_after_job and not maintenance_job:
 		rnd = random.random()
 		decimal_place = 10000
 		rnd_a_dp = (round(rnd * decimal_place))/decimal_place
@@ -257,7 +265,7 @@ def process_job(json_data):
 		##################################################################
 		mote_list_burnt = check_successful_burn(json_data)
 		if(len(mote_list_burnt) > 0):# and job_is_not_cancelled_by_now):
-			logger.warn(str(len(mote_list_burnt)) + '/' + str(len(mote_list)) + ' motes are succussfully burn for job ' + result_id)
+			logger.warn(str(len(mote_list_burnt)) + '/' + str(len(mote_list)) + ' motes are successfully burn for job ' + result_id)
 			update_active_users(json_data['user'],mote_list_burnt)
 			running_jobs_lock.acquire()
 			# logger.info("running_jobs B" + str(running_jobs) + " " + result_id)
@@ -292,15 +300,21 @@ def check_successful_burn(json_data):
 	return motes_successfully_burnt
 
 def add_job_to_job_queue_and_scheduler(json_data):
-	global first_run, jobs_queue, scheduler
+	global first_run, jobs_queue, scheduler, hibernate
+	result_id = json_data['result_id']
+	if(hibernate):
+		result = "0"
+		logging.error("adding job during (from/to) hibernation process: " + resultid )
+		return result
+
 	if(first_run):
 		# start_new_thread(check_scheduler,())
 		first_run = 0
 	try:
 		job_queue_lock.acquire()
 
-		jobs_queue = pickle.load( open( "jobs_queue.p", "rb" ) )
-		scheduler = pickle.load( open( "scheduler.p", "rb" ) )
+		# jobs_queue = pickle.load( open( "jobs_queue.p", "rb" ) )
+		# scheduler = pickle.load( open( "scheduler.p", "rb" ) )
 
 		jobs_queue[json_data['result_id']]={}
 		jobs_queue[json_data['result_id']]['json_data']=json_data
@@ -309,11 +323,13 @@ def add_job_to_job_queue_and_scheduler(json_data):
 		# events are distinguished based on time and not the event tuple ;)
 		#########################################################################
 		rnd = random.random()
-		decimal_place = 10000
+		decimal_place = 1000000
 		rnd_a_dp = (round(rnd * decimal_place))/decimal_place
-		logger.info("rnd_a_dp" + str(rnd_a_dp))
+		logger.info("rnd_a_dp: " + str(rnd_a_dp))
 		# e_start = scheduler.enterabs(int(json_data['time']['from']) + GAP_BEFORE_STARTING_NEW_JOB + (round(random() * decimal_place))/decimal_place, 1, schedule_job, (json_data,))
 		# e_finish = scheduler.enterabs(int(json_data['time']['to']) - GAP_BEFORE_STARTING_NEW_JOB + (round(random() * decimal_place))/decimal_place, 1, finish_job, (json_data,))
+		logger.info("start time:" + str(int(json_data['time']['from']) + GAP_BEFORE_STARTING_NEW_JOB + rnd_a_dp))
+		logger.info("end time:" + str(int(json_data['time']['from']) - GAP_BEFORE_STARTING_NEW_JOB + rnd_a_dp))
 		e_start = scheduler.enterabs(int(json_data['time']['from']) + GAP_BEFORE_STARTING_NEW_JOB + rnd_a_dp, 1, schedule_job, (json_data,))
 		e_finish = scheduler.enterabs(int(json_data['time']['to']) - GAP_BEFORE_STARTING_NEW_JOB + rnd_a_dp, 1, finish_job, (json_data,))
 
@@ -324,8 +340,8 @@ def add_job_to_job_queue_and_scheduler(json_data):
 		jobs_queue[json_data['result_id']]['job_finish_event'] = e_finish
 		logger.info("new job submitted by " + str(json_data['user']) + " added to job queue")
 
-		pickle.dump( jobs_queue, open( "jobs_queue.p", "wb" ) )
-		pickle.dump( scheduler, open( "scheduler.p", "wb" ) )
+		# pickle.dump( jobs_queue, open( "jobs_queue.p", "wb" ) )
+		# pickle.dump( scheduler, open( "scheduler.p", "wb" ) )
 
 		job_queue_lock.release()
 		print("SCHEDULER QUEUE:",scheduler.queue)
@@ -337,8 +353,17 @@ def add_job_to_job_queue_and_scheduler(json_data):
 
 
 def cancel_job_from_queue(json_data):
-	global scheduler
+
+	global scheduler, hibernate
+
 	result_id = json_data['result_id']
+
+	if(hibernate):
+		result = "0"
+		logging.error("cancelling job during (from/to) hibernation process: " + resultid )
+		return result
+
+	
 
 	# process_job_lock = fasteners.InterProcessLock('/tmp/process_job_lock_' + result_id)
 	# process_job_lock.acquire(blocking=True)
@@ -360,8 +385,8 @@ def cancel_job_from_queue(json_data):
 
 		job_queue_lock.acquire()
 
-		jobs_queue = pickle.load( open( "jobs_queue.p", "rb" ) )
-		scheduler = pickle.load( open( "scheduler.p", "rb" ) )
+		# jobs_queue = pickle.load( open( "jobs_queue.p", "rb" ) )
+		# scheduler = pickle.load( open( "scheduler.p", "rb" ) )
 
 
 		if(jobs_queue.get(result_id) != None):
@@ -461,8 +486,8 @@ def cancel_job_from_queue(json_data):
 			#json_data_tmp = dict(jobs_queue[result_id]['json_data'])		
 			#jobs_queue.pop(result_id,None)
 
-			pickle.dump( jobs_queue, open( "jobs_queue.p", "wb" ) )
-			pickle.dump( scheduler, open( "scheduler.p", "wb" ) )
+			# pickle.dump( jobs_queue, open( "jobs_queue.p", "wb" ) )
+			# pickle.dump( scheduler, open( "scheduler.p", "wb" ) )
 
 			job_queue_lock.release()
 			#maintenance_after_finishing_job(json_data_tmp)
@@ -483,28 +508,50 @@ def cancel_job_from_queue(json_data):
 		# tmp_job_lock.release() 
 	return result
 
+@app.route("/hibernate", methods=['GET','POST'])
+def hibernate():
+	global hibernate
+	hibernate = 1
+	job_queue_lock.acquire()
+
+	pickle.dump( jobs_queue, open( "jobs_queue.p", "wb" ) )
+	pickle.dump( scheduler, open( "scheduler.p", "wb" ) )
+
+	job_queue_lock.release()
+	response={}
+	response['hibernate']="SUCCESS"
+
+	return str(response)
+
 
 @app.route("/reload_jobs", methods=['GET','POST'])
 def reload_jobs():
-	global jobs_queue, scheduler, scheduler_down
-	job_queue_lock.acquire()
-	jobs_queue = pickle.load( open( "jobs_queue.p", "rb" ) )
-	scheduler = pickle.load( open( "scheduler.p", "rb" ) )
-	job_queue_lock.release()
+	global jobs_queue, scheduler, scheduler_down,hibernate
 	response = {}
-	response['message'] = "jobs reloaded!"
+	response['message'] = "jobs reloaded!"	
+	try:
+		job_queue_lock.acquire()
+		jobs_queue = pickle.load( open( "jobs_queue.p", "rb" ) )
+		scheduler = pickle.load( open( "scheduler.p", "rb" ) )
+		job_queue_lock.release()
 
-	keys = list(jobs_queue.keys())
-	logger.info(keys)
-	for result_id in keys:
-		print("#############################################################################")
-		print(result_id, jobs_queue[result_id]['json_data']['time']['to'], str(time()))
-		if(int(jobs_queue[result_id]['json_data']['time']['to']) < int(time()) + GAP_BEFORE_STARTING_NEW_JOB*3): # start gap + run for at least gap + stop gap
-			cancel_job_from_queue(jobs_queue[result_id]['json_data'])
 
-	if scheduler_down:
-		start_new_thread(check_scheduler,())
-		scheduler_down = False
+		keys = list(jobs_queue.keys())
+		logger.info(keys)
+		for result_id in keys:
+			print("#############################################################################")
+			print(result_id, jobs_queue[result_id]['json_data']['time']['to'], str(time()))
+			if(int(jobs_queue[result_id]['json_data']['time']['to']) < int(time()) + TIME_TO_EXECUTE_A_JOB*2): # start gap + run for at least gap + stop gap
+				cancel_job_from_queue(jobs_queue[result_id]['json_data'])
+
+		if scheduler_down:
+			start_new_thread(check_scheduler,())
+			scheduler_down = False
+	except:
+		response = {}
+		response['message'] = "jobs NOT reloaded!"
+
+	hibernate = 0
 	return str(response)
 
 @app.route("/show_jobs_queue", methods=['GET','POST'])

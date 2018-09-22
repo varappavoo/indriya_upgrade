@@ -62,7 +62,7 @@ perform_maintenance_after_job = 0
 if perform_maintenance_after_job:
 	GAP_BEFORE_STARTING_NEW_JOB = 90
 else:
-	GAP_BEFORE_STARTING_NEW_JOB = 10
+	GAP_BEFORE_STARTING_NEW_JOB = 1
 
 def check_scheduler():
 	global scheduler
@@ -574,7 +574,7 @@ def cancel_job():
 	response['result_id']=json_data['result_id']
 	response['action']='cancel_job'
 	response['result']=result
-	# response['result']=1
+	response['result']=1
 	return str(response)
 
 # @app.route("/cancel_job", methods=['POST'])

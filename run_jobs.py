@@ -112,7 +112,7 @@ def run_cmd(command, success_identifier, success=True):
 def check_binary_file(elf_file, motetype):
 	if motetype == 'telosb':
 		file_type = 'ELF 32-bit LSB executable, TI msp430, version 1, statically linked, not stripped'
-	elif motetype == 'cc2650':
+	elif motetype == 'cc2650' or motetype == 'cc1350':
 		file_type = 'ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, not stripped'
 	else:
 		logger.warn("system does not support for binary file of type " + str(motetype))
@@ -139,7 +139,7 @@ def execute_job(result_id, motetype, moteref,scp_command,ssh_burn_command, elf_f
 					logger.warning(moteref + " - BURNING TRY:" + str(count_burn_tries))
 					if motetype == 'telosb':
 						burn_done = "1" if(run_cmd(ssh_burn_command, "Programming: OK")) else "0"
-					elif motetype == 'cc2650':
+					elif motetype == 'cc2650' or motetype == 'cc1350':
 						# burn_done = "0" if(run_cmd(ssh_burn_command, "Failed:")) else "1"
 						# burn_done = "1" if(run_cmd(ssh_burn_command, "Program verification successful")) else "0"
 						# burn_done = "1" if(run_cmd(ssh_burn_command, "Finish Loading")) else "0"
@@ -214,7 +214,7 @@ def schedule_job(json_jobs_waiting):
 					all_threads.append(t)
 
 
-			if(job['type'] == 'cc2650'):
+			if(job['type'] == 'cc2650' or job['type'] == 'cc1350'):
 				for mote in job['mote_list']:
 					
 					print(mote, json_nodes_virt_id_phy_id[mote])

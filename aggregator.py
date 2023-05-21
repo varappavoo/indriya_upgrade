@@ -183,7 +183,7 @@ def listen(active_users, active_motes):
 
 	global mqtt_broker,port
 	mqtt_client.on_publish = on_publish                       
-	mqtt_client.username_pw_set("indriya", password="indriya123")
+	mqtt_client.username_pw_set("xxxxxxxxxxxx", password="xxxxxxxxxxxx")
 	mqtt_client.connect(mqtt_broker,port) 
 	mqtt_client.loop_start()
 	# Multithreaded Python server : TCP Server Socket Program Stub
